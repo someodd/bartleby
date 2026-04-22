@@ -1,0 +1,12 @@
+resolver: lts-24.38
+
+# Use the ghcup-managed GHC on PATH; don't let Stack install its own.
+system-ghc: true
+install-ghc: false
+
+packages:
+  - .
+
+extra-deps:
+  - git: https://github.com/someodd/venusia.git
+    commit: 2546ac14cfe2ea0ba9e76e804b20a4bd06e456f5

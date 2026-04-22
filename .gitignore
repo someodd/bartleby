@@ -1,0 +1,23 @@
+.stack-work/
+dist/
+dist-newstyle/
+*.hi
+*.o
+*.prof
+*.hp
+*.tix
+.ghc.environment.*
+cabal.project.local
+cabal.project.local~
+.cabal-sandbox/
+cabal.sandbox.config
+
+# Claude Code session data
+.claude/
+
+# Output bartleby itself writes (in fixtures or when run in-tree)
+catalog/
+catalog.tmp/
+
+# LiquidHaskell per-module cache
+.liquid/

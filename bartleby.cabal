@@ -1,0 +1,103 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           bartleby
+version:        0.1.0.0
+synopsis:       A scrivener for gopherspace
+description:    See README.md and bartleby-plan.md.
+category:       Network
+author:         someodd
+maintainer:     someodd@pm.me
+copyright:      2026 someodd
+license:        GPL-3.0-or-later
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    bartleby-plan.md
+
+library
+  exposed-modules:
+      Bartleby.Atom
+      Bartleby.BCard
+      Bartleby.Config
+      Bartleby.Gophermap
+      Bartleby.Pipeline
+      Bartleby.Preview
+      Bartleby.Types
+      Bartleby.Walker
+  other-modules:
+      Paths_bartleby
+  autogen-modules:
+      Paths_bartleby
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      Venusia
+    , aeson
+    , base >=4.18 && <5
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , liquidhaskell
+    , text
+    , time
+    , yaml
+  default-language: GHC2021
+
+executable bartleby
+  main-is: Main.hs
+  other-modules:
+      Paths_bartleby
+  autogen-modules:
+      Paths_bartleby
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      bartleby
+    , base >=4.18 && <5
+  default-language: GHC2021
+
+test-suite bartleby-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Bartleby.AtomSpec
+      Bartleby.BCardSpec
+      Bartleby.ConfigSpec
+      Bartleby.GophermapSpec
+      Bartleby.PipelineSpec
+      Bartleby.PreviewSpec
+      Bartleby.SmokeSpec
+      Bartleby.WalkerSpec
+      Paths_bartleby
+  autogen-modules:
+      Paths_bartleby
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      QuickCheck
+    , bartleby
+    , base >=4.18 && <5
+    , bytestring
+    , directory
+    , filepath
+    , hspec
+    , text
+    , time
+  default-language: GHC2021
