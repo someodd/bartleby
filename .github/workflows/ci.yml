@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: build + test (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Stack + GHC
+        uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          enable-stack: true
+          stack-no-global: true
+          stack-version: 'latest'
+
+      - name: Cache Stack artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.setup.outputs.stack-root }}
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock', 'package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}-
+            ${{ runner.os }}-stack-
+
+      - name: Install Z3 (LiquidHaskell solver)
+        run: sudo apt-get update && sudo apt-get install -y z3
+
+      - name: Build (lib + exe + tests)
+        run: stack build --test --no-run-tests
+
+      - name: Run tests
+        run: stack test

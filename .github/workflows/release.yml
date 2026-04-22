@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: build + package + publish
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Stack + GHC
+        uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          enable-stack: true
+          stack-no-global: true
+          stack-version: 'latest'
+
+      - name: Cache Stack artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.setup.outputs.stack-root }}
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock', 'package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}-
+            ${{ runner.os }}-stack-
+
+      - name: Install Z3 + fpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y z3 ruby-full build-essential
+          sudo gem install --no-document fpm
+
+      - name: Build optimized binary
+        run: stack build --ghc-options=-O2
+
+      - name: Stage binary
+        run: |
+          mkdir -p dist
+          cp "$(stack path --local-install-root)/bin/bartleby" dist/bartleby
+          strip dist/bartleby
+          chmod +x dist/bartleby
+          ls -l dist/
+
+      - name: Verify runtime deps (guard against surprise dylib links)
+        run: |
+          echo "--- ldd output ---"
+          ldd dist/bartleby
+          ALLOWED='linux-vdso|ld-linux|libc\.so|libm\.so|libpthread|libdl|librt|libgmp|libffi|libz\.so|libnuma'
+          OFFENDERS=$(ldd dist/bartleby | awk '{print $1}' | grep -vE "^($ALLOWED)" | grep -v '^$' || true)
+          if [ -n "$OFFENDERS" ]; then
+            echo "::error::Unexpected runtime deps in bartleby binary:"
+            echo "$OFFENDERS"
+            echo "Update the .deb depends list and the ALLOWED regex above."
+            exit 1
+          fi
+
+      - name: Set version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package .deb (amd64)
+        run: |
+          fpm -s dir -t deb \
+              --name bartleby \
+              --version "${{ steps.ver.outputs.version }}" \
+              --license "GPL-3.0-or-later" \
+              --maintainer "someodd <hi@someodd.zip>" \
+              --description "A scrivener for gopherspace. Walks a library directory, reads sidecar .bcard metadata, and writes a gopher menu tree under catalog/." \
+              --url "https://github.com/someodd/bartleby" \
+              --architecture amd64 \
+              --depends libc6 \
+              --depends libgmp10 \
+              --depends libffi8 \
+              dist/bartleby=/usr/bin/bartleby \
+              README.md=/usr/share/doc/bartleby/README.md \
+              LICENSE=/usr/share/doc/bartleby/LICENSE
+          ls -l *.deb
+
+      - name: Package source-free tarball
+        run: |
+          VERSION=${{ steps.ver.outputs.version }}
+          STAGE="bartleby-${VERSION}-linux-amd64"
+          mkdir -p "$STAGE"
+          cp dist/bartleby README.md LICENSE "$STAGE"/
+          tar -czf "${STAGE}.tar.gz" "$STAGE"
+          ls -l *.tar.gz
+
+      - name: Create release + upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.deb
+            *.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
