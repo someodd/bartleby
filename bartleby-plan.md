@@ -115,8 +115,9 @@ for future conventions.
 
 A directory is a **work** iff a sibling `<dirname>.bcard` exists and
 `classification: true` is not set. Otherwise the directory is a
-**classification**, and bartleby recurses into it. A file is always a
-work.
+**classification**, and bartleby recurses into it. Within a
+classification, a file is always a work; within a work-directory,
+nothing is separately cataloged (the work is an opaque unit).
 
 | Entry          | Sibling `.bcard`? | `classification:` in card?  | Result                                    |
 |----------------|-------------------|-------------------------|-------------------------------------------|

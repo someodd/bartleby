@@ -103,6 +103,18 @@ spec = describe "Bartleby.Walker" $ do
       -- root total = recipes (2) + notes (1)
       clsTotalWorks root `shouldBe` 3
 
+    it "a work-directory is opaque (its interior is not cataloged)" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
+      let Just recipes = findCls "Recipes" (clsSubs root)
+      -- photo.jpg and recipe.txt live inside the Snickerdoodles
+      -- work-directory; they must not appear as separate entries
+      -- anywhere in the recipes subtree.
+      findWork "photo.jpg"  (clsWorks recipes) `shouldBe` Nothing
+      findWork "recipe.txt" (clsWorks recipes) `shouldBe` Nothing
+      -- No phantom sub-classification leaks out of the work either.
+      map clsSourcePath (clsSubs recipes)
+        `shouldNotContain` ["recipes/snickerdoodles"]
+
     it "sorts sub-classifications by directory name (deterministic)" $ do
       (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
       -- walker sorts by filesystem entry name, not display title.
