@@ -56,7 +56,12 @@ jobs:
           echo "--- ldd output ---"
           ldd dist/bartleby
           ALLOWED='linux-vdso|ld-linux|libc\.so|libm\.so|libpthread|libdl|librt|libgmp|libffi|libz\.so|libnuma'
-          OFFENDERS=$(ldd dist/bartleby | awk '{print $1}' | grep -vE "^($ALLOWED)" | grep -v '^$' || true)
+          # Strip any "/lib*/" path prefix so we compare basenames.
+          OFFENDERS=$(ldd dist/bartleby \
+              | awk '{print $1}' \
+              | sed 's|.*/||' \
+              | grep -vE "^($ALLOWED)" \
+              | grep -v '^$' || true)
           if [ -n "$OFFENDERS" ]; then
             echo "::error::Unexpected runtime deps in bartleby binary:"
             echo "$OFFENDERS"
