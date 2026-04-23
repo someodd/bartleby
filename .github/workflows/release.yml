@@ -18,6 +18,7 @@ jobs:
         uses: haskell-actions/setup@v2
         id: setup
         with:
+          ghc-version: '9.10.3'        # matches LTS-24.38; stack.yaml uses system-ghc
           enable-stack: true
           stack-no-global: true
           stack-version: 'latest'
