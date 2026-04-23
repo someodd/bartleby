@@ -13,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Stack + GHC
+      - name: Set up Stack
         uses: haskell-actions/setup@v2
         id: setup
         with:
-          ghc-version: '9.10.3'        # matches LTS-24.38; stack.yaml uses system-ghc
           enable-stack: true
           stack-no-global: true
+          stack-setup-ghc: true       # Stack will install the resolver's GHC
           stack-version: 'latest'
 
       - name: Cache Stack artifacts

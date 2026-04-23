@@ -1,8 +1,9 @@
 resolver: lts-24.38
 
-# Use the ghcup-managed GHC on PATH; don't let Stack install its own.
+# Prefer whatever GHC is on PATH (ghcup's, system's, etc.) as long as
+# its version matches the resolver. If none matches (e.g. on a fresh
+# CI runner), Stack will install its own — that's the default.
 system-ghc: true
-install-ghc: false
 
 packages:
   - .
