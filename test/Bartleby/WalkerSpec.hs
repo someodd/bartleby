@@ -115,6 +115,31 @@ spec = describe "Bartleby.Walker" $ do
       map clsSourcePath (clsSubs recipes)
         `shouldNotContain` ["recipes/snickerdoodles"]
 
+    it "warns on .bcard files nested inside a work-directory" $ do
+      (_, ws) <- Walker.walkLibrary fixtureRoot defaultConfig
+      let nested = filter
+            (\w -> T.pack "inside work-directory"
+                     `T.isInfixOf` wMessage w) ws
+      -- The fixture contains recipes/snickerdoodles/photo.jpg.bcard
+      -- nested inside the Snickerdoodles work-directory.
+      length nested `shouldSatisfy` (>= 1)
+      -- The warning's path points at the nested bcard itself.
+      map wPath nested
+        `shouldContain` ["recipes/snickerdoodles/photo.jpg.bcard"]
+
+    it "nested bcards do not leak into the outer work's metadata" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
+      let Just recipes = findCls "Recipes" (clsSubs root)
+      case findWork "Snickerdoodles" (clsWorks recipes) of
+        Nothing -> expectationFailure "expected work 'Snickerdoodles'"
+        Just w  -> do
+          -- Title, kind, and description still come from the outer
+          -- recipes/snickerdoodles.bcard sibling, not from the
+          -- nested recipes/snickerdoodles/photo.jpg.bcard.
+          workTitle w        `shouldBe` "Snickerdoodles"
+          workKind w         `shouldBe` WorkDirectory
+          workDescription w  `shouldBe` "My grandmother's recipe."
+
     it "sorts sub-classifications by directory name (deterministic)" $ do
       (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
       -- walker sorts by filesystem entry name, not display title.

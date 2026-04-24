@@ -232,17 +232,28 @@ buildFileWork config absPath relPath name mcard = do
 -- | Build a 'Work' for a directory that has a @classification: false@
 -- (or absent) bcard — a "directory-as-book." Its interior is opaque
 -- except for the recursive byte count.
+--
+-- Any @.bcard@ files found nested inside the work-directory are
+-- warned about and otherwise untouched — the user likely meant the
+-- directory to be a classification, or the bcard to live one level
+-- up. Opacity is preserved; only stderr gains a line.
 buildDirectoryWork
   :: Config -> FilePath -> FilePath -> Text -> Maybe BCard
   -> IO (Work, [Warning])
 buildDirectoryWork _config absPath relPath name mcard = do
-  mtime <- getModificationTime absPath
-  sz    <- recursiveSize absPath
-  let mDay    = utctDay mtime
-      title   = fromMaybe name (mcard >>= cardTitle)
-      created = fromMaybe mDay (mcard >>= cardCreated)
-      updated = fromMaybe created (mcard >>= cardUpdated)
-      desc    = fromMaybe "" (mcard >>= cardDescription)
+  mtime               <- getModificationTime absPath
+  (sz, innerBcards)   <- walkForSizeAndBcards absPath relPath
+  let mDay     = utctDay mtime
+      title    = fromMaybe name (mcard >>= cardTitle)
+      created  = fromMaybe mDay (mcard >>= cardCreated)
+      updated  = fromMaybe created (mcard >>= cardUpdated)
+      desc     = fromMaybe "" (mcard >>= cardDescription)
+      warnings =
+        [ Warning bpath
+            ("bcard inside work-directory '"
+              <> T.pack relPath <> "' is ignored")
+        | bpath <- innerBcards
+        ]
   pure
     ( Work
         { workTitle       = title
@@ -254,7 +265,7 @@ buildDirectoryWork _config absPath relPath name mcard = do
         , workSize        = sz
         , workPreview     = Nothing
         }
-    , []
+    , warnings
     )
 
 -- | Resolve description and optional preview from the file's text
@@ -279,24 +290,38 @@ resolveDescriptionAndPreview config absPath relPath itype mcard =
       let desc = fromMaybe "" (mcard >>= cardDescription)
        in pure (desc, Nothing, [])
 
--- | Total recursive byte size of a directory. Follows file symlinks;
--- skips directory symlinks (same policy as the main walker).
-recursiveSize :: FilePath -> IO Integer
-recursiveSize path = do
-  entries <- listDirectory path
-  sums <- forM entries $ \name -> do
-    let p = path </> name
-    isLink <- pathIsSymbolicLink p
-    isDir  <- doesDirectoryExist p
+-- | Walk a work-directory to (a) compute its recursive byte size and
+-- (b) collect the library-relative paths of any @.bcard@ files nested
+-- inside. The caller ('buildDirectoryWork') turns the second list
+-- into one warning per entry; opacity is preserved because the
+-- bcards are never read.
+--
+-- Follows file symlinks; skips directory symlinks (same policy as
+-- the main walker).
+walkForSizeAndBcards
+  :: FilePath   -- ^ absolute path of the work directory
+  -> FilePath   -- ^ library-relative path of the work directory
+  -> IO (Integer, [FilePath])
+walkForSizeAndBcards absPath relPath = do
+  entries <- listDirectory absPath
+  results <- forM entries $ \name -> do
+    let abs' = absPath </> name
+        rel' = joinRel relPath name
+    isLink <- pathIsSymbolicLink abs'
+    isDir  <- doesDirectoryExist abs'
     case (isLink, isDir) of
-      (True, True) -> pure 0
-      (_,    True) -> recursiveSize p
+      (True, True) -> pure (0, [])
+      (_,    True) -> walkForSizeAndBcards abs' rel'
       _            -> do
-        isFile <- doesFileExist p
+        isFile <- doesFileExist abs'
         if isFile
-          then getFileSize p
-          else pure 0
-  pure (sum sums)
+          then do
+            sz <- getFileSize abs'
+            let bcards = [rel' | ".bcard" `isSuffixOf` name]
+            pure (sz, bcards)
+          else pure (0, [])
+  let (sizes, bcardLists) = unzip results
+  pure (sum sizes, concat bcardLists)
 
 -- | Join a relative directory path with a leaf name, handling the
 -- root case (relPath = "") cleanly.

@@ -117,7 +117,10 @@ A directory is a **work** iff a sibling `<dirname>.bcard` exists and
 `classification: true` is not set. Otherwise the directory is a
 **classification**, and bartleby recurses into it. Within a
 classification, a file is always a work; within a work-directory,
-nothing is separately cataloged (the work is an opaque unit).
+nothing is separately cataloged (the work is an opaque unit). Any
+`.bcard` files nested inside a work-directory are warned about and
+otherwise ignored — the user likely meant the directory to be a
+classification, or the bcard to live one level up.
 
 | Entry          | Sibling `.bcard`? | `classification:` in card?  | Result                                    |
 |----------------|-------------------|-------------------------|-------------------------------------------|
@@ -544,9 +547,10 @@ bartleby: warning: '_snickerdoodles.bcard' has a reserved filename
 
 Non-fatal problems (dangling bcards, malformed YAML, nonsensical
 fields, reserved filenames, tab/newline in filenames, UTF-8 decode
-failures in text previews) print to stderr with the
-`bartleby: warning:` prefix. The build continues; the affected entry
-falls back to auto-guessed metadata or is skipped as appropriate.
+failures in text previews, `.bcard` files nested inside a
+work-directory) print to stderr with the `bartleby: warning:`
+prefix. The build continues; the affected entry falls back to
+auto-guessed metadata or is skipped as appropriate.
 
 ---
 
