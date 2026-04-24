@@ -116,3 +116,14 @@ spec = do
           -- Count info lines that start with "  " in-between work/atom sections.
           -- Cheap heuristic: the word "Classic" is gone.
       rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "Classic"))
+
+    it "labels the direct-works section 'Class-Here Works'" $ do
+      let cls = (emptyClassification "x")
+            { clsWorks = [sampleWork], clsTotalWorks = 1 }
+          rendered = Gophermap.renderClassification defaultConfig cls
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "Class-Here Works")
+
+    it "omits the Class-Here Works section when there are no direct works" $ do
+      let cls = emptyClassification "x"  -- no works, no subs
+          rendered = Gophermap.renderClassification defaultConfig cls
+      rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "Class-Here Works"))

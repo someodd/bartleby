@@ -325,8 +325,8 @@ i  ---------------
 i  Things with sugar.
 ...
 i
-i  Works                                        ← omit if no direct works
-i  -----
+i  Class-Here Works                             ← omit if no direct works
+i  ----------------
 1Snickerdoodles (2026-04-20, 4.3 M)	<selector>/recipes/snickerdoodles	<host>	<port>
 i  My grandmother's recipe with a hint of nutmeg.
 I Cheesecake (2026-04-18, 1.2 M)	<selector>/recipes/cheesecake.jpg	<host>	<port>
@@ -337,7 +337,7 @@ i
 
 ### Description info lines
 
-Every work in the "Recent Accessions" and "Works" sections — and every
+Every work in the "Recent Accessions" and "Class-Here Works" sections — and every
 sub-classification in the "Classifications" section — is followed by
 one info line showing its description, truncated to 70 characters
 (with `...` ellipsis if longer). The info line is **omitted** when the
@@ -390,9 +390,11 @@ The `.` separator is the decimal point; no locale formatting.
 ### Section-omission rules
 
 - Skip Recent Accessions when `total_recursive_works ≤ recent_count`
-  (the Works section already contains everything)
+  (Class-Here Works already contains everything)
 - Skip Classifications when there are none
-- Skip Works when there are none directly in this classification
+- Skip Class-Here Works when there are none directly in this
+  classification (the DDC term: *class here* = class directly at
+  this level, not in a sub-classification)
 
 ### Title rendering
 

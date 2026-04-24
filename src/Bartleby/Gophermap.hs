@@ -98,8 +98,8 @@ renderWorks :: Config -> Classification -> Text
 renderWorks config cls
   | null (clsWorks cls) = ""
   | otherwise = T.concat
-      [ VM.info "  Works"
-      , VM.info "  -----"
+      [ VM.info "  Class-Here Works"
+      , VM.info "  ----------------"
       , T.concat (map (renderWorkLine config) sortedWorks)
       , VM.info ""
       ]
