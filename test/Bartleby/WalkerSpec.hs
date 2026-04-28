@@ -12,12 +12,13 @@ fixtureRoot = "test/fixtures/walker/basic"
 
 defaultConfig :: Config
 defaultConfig = Config
-  { cfgHostname         = "gopher.example.com"
-  , cfgPort             = 70
-  , cfgSelector         = Selector "/library"
-  , cfgRecentCount      = 10
-  , cfgFeedCount        = 50
-  , cfgTextPreviewBytes = 4096
+  { cfgHostname          = "gopher.example.com"
+  , cfgPort              = 70
+  , cfgSelector          = Selector "/library"
+  , cfgRecentCount       = 10
+  , cfgFeedCount         = 50
+  , cfgTextPreviewBytes  = 4096
+  , cfgGophermapFilename = ".gophermap"
   }
 
 findWork :: T.Text -> [Work] -> Maybe Work

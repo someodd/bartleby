@@ -219,6 +219,7 @@ text_preview_bytes:  4096
 | `recent_count`       | no       | 10            | Accessions per catalog gophermap      |
 | `feed_count`         | no       | 50            | Entries per atom feed                 |
 | `text_preview_bytes` | no       | 4096          | Upper bound for text-work content reads (used by atom `<content>` and the first-paragraph description fallback) |
+| `gophermap_filename` | no       | `.gophermap`  | The name written for each classification's menu file. Default matches Venusia/pygopherd; set to `gophermap` (no leading dot) for gophernicus, Pituophis, or Bucktooth. Must not be empty, contain `/`, `\`, or NUL, or be exactly `.` or `..` |
 
 The library's own title is the basename of the library directory,
 just as any sub-classification's title is its directory name. The

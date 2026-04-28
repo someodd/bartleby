@@ -29,6 +29,7 @@ knownFields =
   , "recent_count"
   , "feed_count"
   , "text_preview_bytes"
+  , "gophermap_filename"
   ]
 
 -- | Parse a bytes blob as bartleby.conf, returning either a fatal
@@ -49,18 +50,21 @@ fromObject obj = do
   recent   <- optInt  "recent_count"       10   >>= nonNeg "recent_count"
   feed     <- optInt  "feed_count"         50   >>= nonNeg "feed_count"
   preview  <- optInt  "text_preview_bytes" 4096 >>= nonNeg "text_preview_bytes"
+  mapName  <- optText "gophermap_filename" ".gophermap"
+              >>= validateGophermapFilename
   let warnings =
         [ Warning "bartleby.conf" ("unknown field: " <> Key.toText k)
         | k <- KeyMap.keys obj
         , Key.toText k `notElem` knownFields
         ]
   pure ( Config
-           { cfgHostname         = hostname
-           , cfgPort             = port
-           , cfgSelector         = normalizeSelector rawSel
-           , cfgRecentCount      = recent
-           , cfgFeedCount        = feed
-           , cfgTextPreviewBytes = preview
+           { cfgHostname          = hostname
+           , cfgPort              = port
+           , cfgSelector          = normalizeSelector rawSel
+           , cfgRecentCount       = recent
+           , cfgFeedCount         = feed
+           , cfgTextPreviewBytes  = preview
+           , cfgGophermapFilename = mapName
            }
        , warnings
        )
@@ -93,6 +97,19 @@ nonNeg :: Text -> Int -> Either String Int
 nonNeg k n
   | n >= 0    = Right n
   | otherwise = Left ("field '" ++ T.unpack k ++ "' must be >= 0")
+
+-- | Validate a gophermap filename: non-empty, no path separators, not
+-- exactly @.@ or @..@. The default is @\".gophermap\"@; users on
+-- gophernicus, Pituophis, or Bucktooth should set @gophermap@.
+validateGophermapFilename :: Text -> Either String Text
+validateGophermapFilename name
+  | T.null name      = Left "gophermap_filename must not be empty"
+  | name == "."      = Left "gophermap_filename must not be '.'"
+  | name == ".."     = Left "gophermap_filename must not be '..'"
+  | T.any bad name   = Left "gophermap_filename must not contain '/', '\\', or NUL"
+  | otherwise        = Right name
+  where
+    bad c = c == '/' || c == '\\' || c == '\0'
 
 -- | Normalize a selector string: ensure a leading slash, strip
 -- trailing slashes, preserve \"\/\" as the root form.

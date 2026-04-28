@@ -16,12 +16,13 @@ spec = describe "Bartleby.Config" $ do
       case Config.parseConfig yaml of
         Left e -> expectationFailure e
         Right (cfg, warns) -> do
-          cfgHostname         cfg `shouldBe` "gopher.example.com"
-          cfgPort             cfg `shouldBe` 70
-          cfgSelector         cfg `shouldBe` Selector "/"
-          cfgRecentCount      cfg `shouldBe` 10
-          cfgFeedCount        cfg `shouldBe` 50
-          cfgTextPreviewBytes cfg `shouldBe` 4096
+          cfgHostname          cfg `shouldBe` "gopher.example.com"
+          cfgPort              cfg `shouldBe` 70
+          cfgSelector          cfg `shouldBe` Selector "/"
+          cfgRecentCount       cfg `shouldBe` 10
+          cfgFeedCount         cfg `shouldBe` 50
+          cfgTextPreviewBytes  cfg `shouldBe` 4096
+          cfgGophermapFilename cfg `shouldBe` ".gophermap"
           warns `shouldBe` []
 
     it "rejects config without hostname" $
@@ -69,6 +70,25 @@ spec = describe "Bartleby.Config" $ do
       case Config.parseConfig yaml of
         Left e -> expectationFailure e
         Right (_, warns) -> length warns `shouldBe` 2
+
+    it "accepts gophermap_filename override" $ do
+      let yaml = BS8.pack "hostname: a\ngophermap_filename: gophermap\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) ->
+          cfgGophermapFilename cfg `shouldBe` "gophermap"
+
+    it "rejects an empty gophermap_filename" $
+      Config.parseConfig (BS8.pack "hostname: a\ngophermap_filename: \"\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects a gophermap_filename containing a slash" $
+      Config.parseConfig (BS8.pack "hostname: a\ngophermap_filename: \"a/b\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects gophermap_filename = '..'" $
+      Config.parseConfig (BS8.pack "hostname: a\ngophermap_filename: \"..\"\n")
+        `shouldSatisfy` isLeft
 
   describe "normalizeSelector" $ do
 

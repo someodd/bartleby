@@ -92,12 +92,13 @@ data WorkKind
 -- | Parsed @bartleby.conf@. The library's own title is derived from
 -- the library directory's basename, not stored here.
 data Config = Config
-  { cfgHostname         :: !Text
-  , cfgPort             :: !Int      -- ^ 1..65535
-  , cfgSelector         :: !Selector -- ^ normalized
-  , cfgRecentCount      :: !Int      -- ^ non-negative
-  , cfgFeedCount        :: !Int      -- ^ non-negative
-  , cfgTextPreviewBytes :: !Int      -- ^ non-negative
+  { cfgHostname          :: !Text
+  , cfgPort              :: !Int      -- ^ 1..65535
+  , cfgSelector          :: !Selector -- ^ normalized
+  , cfgRecentCount       :: !Int      -- ^ non-negative
+  , cfgFeedCount         :: !Int      -- ^ non-negative
+  , cfgTextPreviewBytes  :: !Int      -- ^ non-negative
+  , cfgGophermapFilename :: !Text     -- ^ name for each menu file (default ".gophermap")
   } deriving (Show, Eq)
 
 -- | Parsed @.bcard@. Every field is optional at the schema level.

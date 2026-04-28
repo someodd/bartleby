@@ -103,6 +103,7 @@ YAML, one per library, at the library root:
     recent_count: 10
     feed_count: 50
     text_preview_bytes: 4096
+    gophermap_filename: .gophermap   # set to "gophermap" for gophernicus/Pituophis/Bucktooth
 
 Only `hostname` is required. Everything else has the defaults shown.
 The library's own title is the basename of the library directory —

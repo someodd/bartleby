@@ -89,9 +89,10 @@ renderOne config cls =
   ]
   where
     sourcePath  = clsSourcePath cls
+    mapName     = T.unpack (cfgGophermapFilename config)
     gophermapPath = case sourcePath of
-      "" -> ".gophermap"
-      p  -> p </> ".gophermap"
+      "" -> mapName
+      p  -> p </> mapName
     feedPath = case sourcePath of
       "" -> "feed.xml"
       p  -> p </> "feed.xml"
