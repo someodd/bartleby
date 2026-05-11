@@ -10,6 +10,7 @@ module Bartleby.Gophermap
   , itemTypeChar
   ) where
 
+import Bartleby.Preview (summarizeDescription)
 import Bartleby.Types
 
 import Data.Function (on)
@@ -150,21 +151,14 @@ renderSubCls config sub =
       desc = renderDescInfoLine (clsDescription sub)
   in line <> desc
 
--- | One info line showing a description, truncated to 70 codepoints
--- with @...@ ellipsis. Newlines collapse to spaces. Tabs replaced.
--- Omitted entirely when the description is empty.
+-- | One info line showing a description, shaped by
+-- 'summarizeDescription' (whitespace collapsed, truncated to 70
+-- codepoints with @...@). Omitted entirely when the description is
+-- empty.
 renderDescInfoLine :: Text -> Text
 renderDescInfoLine "" = ""
 renderDescInfoLine desc =
-  let collapsed =
-        escapeTabs
-          . T.replace "\n" " "
-          . T.replace "\r" " "
-          $ desc
-      truncated
-        | T.length collapsed > 70 = T.take 67 collapsed <> "..."
-        | otherwise               = collapsed
-  in VM.info ("  " <> truncated)
+  VM.info ("  " <> summarizeDescription 70 desc)
 
 ------------------------------------------------------------------------
 -- Helpers

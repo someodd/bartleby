@@ -86,3 +86,38 @@ spec = do
       property $ \(s :: String) ->
         let result = Preview.firstParagraph (T.pack s)
          in not (T.pack "\n\n" `T.isInfixOf` result)
+
+  describe "Bartleby.Preview.summarizeDescription" $ do
+
+    it "passes a short description through unchanged" $
+      Preview.summarizeDescription 70 (T.pack "A short note.")
+        `shouldBe` T.pack "A short note."
+
+    it "collapses newlines to single spaces" $
+      Preview.summarizeDescription 70 (T.pack "line one\nline two\nline three")
+        `shouldBe` T.pack "line one line two line three"
+
+    it "collapses tabs to single spaces" $
+      Preview.summarizeDescription 70 (T.pack "col\tone\tcol\ttwo")
+        `shouldBe` T.pack "col one col two"
+
+    it "collapses runs of spaces to a single space" $
+      Preview.summarizeDescription 70 (T.pack "hello   world")
+        `shouldBe` T.pack "hello world"
+
+    it "strips leading and trailing whitespace" $
+      Preview.summarizeDescription 70 (T.pack "  hi  ")
+        `shouldBe` T.pack "hi"
+
+    it "truncates with ellipsis when over limit" $
+      Preview.summarizeDescription 10 (T.pack "abcdefghijklmnop")
+        `shouldBe` T.pack "abcdefg..."
+
+    it "keeps exactly maxLen codepoints at the boundary" $
+      Preview.summarizeDescription 5 (T.pack "abcde") `shouldBe` T.pack "abcde"
+
+    it "returns empty for empty input" $
+      Preview.summarizeDescription 70 (T.pack "") `shouldBe` T.pack ""
+
+    it "returns empty for whitespace-only input" $
+      Preview.summarizeDescription 70 (T.pack "  \n\t \r ") `shouldBe` T.pack ""

@@ -14,6 +14,7 @@ module Bartleby.Preview
   ( readPreview
   , utf8SafePrefix
   , firstParagraph
+  , summarizeDescription
   ) where
 
 import Data.ByteString (ByteString)
@@ -66,3 +67,20 @@ firstParagraph input =
       t3 = T.dropWhile (== '\n') t2
       (para, _rest) = T.breakOn "\n\n" t3
   in para
+
+-- | Shape a work description into a one-line excerpt.
+--
+-- Collapses every run of whitespace (newlines, tabs, multiple
+-- spaces) to a single space, strips leading/trailing whitespace,
+-- and truncates to @maxLen@ codepoints with a trailing @...@ if
+-- the input was longer.
+--
+-- This is the single source of truth for the catalog gophermap's
+-- per-work info line and the atom feed's @<summary>@ — both want
+-- the same one-line excerpt of 'Bartleby.Types.workDescription'.
+summarizeDescription :: Int -> Text -> Text
+summarizeDescription maxLen desc =
+  let collapsed = T.unwords (T.words desc)
+  in if T.length collapsed > maxLen
+        then T.take (max 0 (maxLen - 3)) collapsed <> "..."
+        else collapsed

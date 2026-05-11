@@ -137,3 +137,20 @@ spec = do
           idxNewer = T.length (fst (T.breakOn (T.pack "<title>Newer</title>") out))
           idxOlder = T.length (fst (T.breakOn (T.pack "<title>Older</title>") out))
       idxNewer `shouldSatisfy` (< idxOlder)
+
+    it "<summary> is shaped like a catalog desc-info line (truncated)" $ do
+      -- A description longer than 70 codepoints should be truncated
+      -- the same way the catalog gophermap renders it.
+      let longDesc = T.replicate 200 (T.pack "a")
+          w   = textWork { workDescription = longDesc }
+          cls = (emptyCls "x") { clsWorks = [w] }
+          out = Atom.renderFeed defaultConfig cls
+      out `shouldSatisfy` T.isInfixOf (T.pack "...</summary>")
+      out `shouldSatisfy` (not . T.isInfixOf (T.replicate 100 (T.pack "a")))
+
+    it "<summary> collapses newlines in the description" $ do
+      let w   = textWork { workDescription = T.pack "line one\nline two" }
+          cls = (emptyCls "x") { clsWorks = [w] }
+          out = Atom.renderFeed defaultConfig cls
+      out `shouldSatisfy` T.isInfixOf
+        (T.pack "<summary type=\"text\">line one line two</summary>")

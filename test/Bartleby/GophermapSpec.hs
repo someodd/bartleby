@@ -96,13 +96,16 @@ spec = do
       -- type-I item (image)
       rendered `shouldSatisfy` T.isInfixOf (T.pack "ICheesecake")
 
-    it "escapes tabs inside descriptions to spaces" $ do
+    it "collapses tabs inside descriptions to a single space" $ do
+      -- Description text now flows through summarizeDescription,
+      -- which collapses every whitespace run (tabs included) to a
+      -- single space — the same shape used by atom <summary>.
       let w = sampleWork { workDescription = "a\tb\tc" }
           cls = (emptyClassification "x")
             { clsWorks = [w], clsTotalWorks = 1 }
           rendered = Gophermap.renderClassification defaultConfig cls
       rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "a\tb"))
-      rendered `shouldSatisfy` T.isInfixOf (T.pack "a  b  c")
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "a b c")
 
     it "truncates long descriptions with ellipsis" $ do
       let longDesc = T.replicate 200 "x"
