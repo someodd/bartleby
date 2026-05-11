@@ -17,7 +17,6 @@
 module Bartleby.Walker
   ( walkLibrary
   , shouldWalk
-  , alwaysSkip
   ) where
 
 import Bartleby.BCard (parseBCard)
@@ -53,18 +52,9 @@ walkLibrary libraryRoot config = do
   (rootCls, ws) <- walkClassification config absRoot rootTitle "" True Nothing
   pure (Library rootCls, ws)
 
--- | Names that are skipped unconditionally — even when
--- @include_dotfiles@ is on. Descending into a VCS directory would
--- dump thousands of binary objects into the catalog; @.DS_Store@ is
--- never useful. If users genuinely need to catalog something named
--- this, they can rename it.
-alwaysSkip :: [String]
-alwaysSkip = [".git", ".hg", ".svn", ".bzr", ".DS_Store"]
-
 -- | Whether a filesystem entry name should be descended into.
 shouldWalk :: Bool -> Bool -> String -> Bool
 shouldWalk includeDotfiles isRoot name
-  | name `elem` alwaysSkip                        = False
   | not includeDotfiles && take 1 name == "."     = False
   | isRoot && name `elem` reservedAtRoot          = False
   | otherwise                                     = True

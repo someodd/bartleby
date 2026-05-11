@@ -40,17 +40,13 @@ spec = describe "Bartleby.Walker" $ do
     it "includes dotfiles when include_dotfiles=True" $
       Walker.shouldWalk True  False ".plan" `shouldBe` True
 
-    it "always skips .git regardless of the flag" $ do
-      Walker.shouldWalk False False ".git" `shouldBe` False
-      Walker.shouldWalk True  False ".git" `shouldBe` False
-
-    it "always skips .DS_Store regardless of the flag" $ do
-      Walker.shouldWalk False False ".DS_Store" `shouldBe` False
-      Walker.shouldWalk True  False ".DS_Store" `shouldBe` False
-
-    it "always skips .hg, .svn, .bzr even with include_dotfiles=True" $
-      map (Walker.shouldWalk True False) [".hg", ".svn", ".bzr"]
-        `shouldBe` [False, False, False]
+    it "include_dotfiles=True does not special-case any name" $
+      -- Walking .git/ under the opt-in flag is the user's choice;
+      -- filtering VCS dirs (if/when wanted) is a separate
+      -- configurable feature, not a built-in carve-out.
+      map (Walker.shouldWalk True False)
+          [".git", ".hg", ".svn", ".bzr", ".DS_Store"]
+        `shouldBe` [True, True, True, True, True]
 
     it "regular files are walked in either mode" $ do
       Walker.shouldWalk False False "regular.txt" `shouldBe` True
