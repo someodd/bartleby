@@ -108,6 +108,8 @@ YAML, one per library, at the library root:
       .wad:  "9"
       .epub: "9"
       .nfo:  "0"
+    include_dotfiles: false          # set true to expose .plan, .signature, etc.
+                                     # (.git, .hg, .svn, .bzr, .DS_Store are still skipped)
 
 Only `hostname` is required. Everything else has the defaults shown.
 The library's own title is the basename of the library directory —

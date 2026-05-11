@@ -104,6 +104,11 @@ data Config = Config
     -- ^ merged extension → item-type map (built-in defaults overlaid
     -- with any user-supplied @item_types@ from bartleby.conf).
     -- Keys are lowercase and start with @\".\"@.
+  , cfgIncludeDotfiles   :: !Bool
+    -- ^ When 'True', entries whose name starts with @.@ are
+    -- catalogued instead of skipped. A small hardcoded set
+    -- (VCS dirs, @.DS_Store@) is still skipped — see
+    -- 'Bartleby.Walker.alwaysSkip'.
   } deriving (Show, Eq)
 
 -- | Parsed @.bcard@. Every field is optional at the schema level.

@@ -18,6 +18,7 @@ defaultConfig = Config
   , cfgTextPreviewBytes  = 4096
   , cfgGophermapFilename = ".gophermap"
   , cfgItemTypes         = defaultItemTypes
+  , cfgIncludeDotfiles   = False
   }
 
 emptyCls :: Text -> Classification

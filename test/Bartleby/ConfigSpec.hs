@@ -26,6 +26,7 @@ spec = describe "Bartleby.Config" $ do
           cfgTextPreviewBytes  cfg `shouldBe` 4096
           cfgGophermapFilename cfg `shouldBe` ".gophermap"
           cfgItemTypes         cfg `shouldBe` defaultItemTypes
+          cfgIncludeDotfiles   cfg `shouldBe` False
           warns `shouldBe` []
 
     it "rejects config without hostname" $
@@ -183,6 +184,34 @@ spec = describe "Bartleby.Config" $ do
         Right (cfg, warns) -> do
           cfgItemTypes cfg `shouldBe` defaultItemTypes
           length warns `shouldBe` 1
+
+  describe "include_dotfiles" $ do
+
+    it "defaults to false when absent" $ do
+      let yaml = BS8.pack "hostname: a\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> cfgIncludeDotfiles cfg `shouldBe` False
+
+    it "accepts true" $ do
+      let yaml = BS8.pack "hostname: a\ninclude_dotfiles: true\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> cfgIncludeDotfiles cfg `shouldBe` True
+
+    it "accepts false explicitly" $ do
+      let yaml = BS8.pack "hostname: a\ninclude_dotfiles: false\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> cfgIncludeDotfiles cfg `shouldBe` False
+
+    it "rejects a non-bool value" $
+      Config.parseConfig (BS8.pack "hostname: a\ninclude_dotfiles: maybe\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects an integer" $
+      Config.parseConfig (BS8.pack "hostname: a\ninclude_dotfiles: 1\n")
+        `shouldSatisfy` isLeft
 
   describe "normalizeSelector" $ do
 

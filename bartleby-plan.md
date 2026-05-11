@@ -228,6 +228,7 @@ item_types:
 | `text_preview_bytes` | no       | 4096          | Upper bound for text-work content reads (used by atom `<content>` and the first-paragraph description fallback) |
 | `gophermap_filename` | no       | `.gophermap`  | The name written for each classification's menu file. Default matches Venusia/pygopherd; set to `gophermap` (no leading dot) for gophernicus, Pituophis, or Bucktooth. Must not be empty, contain `/`, `\`, or NUL, or be exactly `.` or `..` |
 | `item_types`         | no       | (built-ins)   | Mapping of `.ext` → single-char gopher item type (`0`, `1`, `I`, `g`, `s`, `h`, `9`). Entries are layered on top of the built-in table from the next section; user values win. Keys must start with `.`, are normalized to lowercase, and may not contain `/`, `\`, or NUL. The menu type `1` is allowed for CGI scripts or other executables that emit a gopher menu. |
+| `include_dotfiles`   | no       | `false`       | When `true`, file and directory names starting with `.` are catalogued instead of skipped — useful for surfacing `.plan`, `.signature`, etc. A small hardcoded set is *always* skipped regardless: `.git`, `.hg`, `.svn`, `.bzr`, `.DS_Store`. Note: an extensionless dotfile like `.plan` has no extension by `takeExtension`'s reckoning, so it falls through to the binary (`9`) default. Per-file item-type override via `.bcard` is on the roadmap. |
 
 The library's own title is the basename of the library directory,
 just as any sub-classification's title is its directory name. The

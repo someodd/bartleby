@@ -35,6 +35,7 @@ knownFields =
   , "text_preview_bytes"
   , "gophermap_filename"
   , "item_types"
+  , "include_dotfiles"
   ]
 
 -- | Parse a bytes blob as bartleby.conf, returning either a fatal
@@ -58,6 +59,7 @@ fromObject obj = do
   mapName  <- optText "gophermap_filename" ".gophermap"
               >>= validateGophermapFilename
   overrides <- parseItemTypesField (look "item_types")
+  incDot   <- optBool "include_dotfiles" False
   let warnings =
         [ Warning "bartleby.conf" ("unknown field: " <> Key.toText k)
         | k <- KeyMap.keys obj
@@ -72,6 +74,7 @@ fromObject obj = do
            , cfgTextPreviewBytes  = preview
            , cfgGophermapFilename = mapName
            , cfgItemTypes         = Map.union overrides defaultItemTypes
+           , cfgIncludeDotfiles   = incDot
            }
        , warnings
        )
@@ -89,6 +92,9 @@ fromObject obj = do
 
     optInt :: Text -> Int -> Either String Int
     optInt k def = maybe (Right def) (fromJ k) (look k)
+
+    optBool :: Text -> Bool -> Either String Bool
+    optBool k def = maybe (Right def) (fromJ k) (look k)
 
     fromJ :: Aeson.FromJSON a => Text -> Value -> Either String a
     fromJ k v = case Aeson.fromJSON v of

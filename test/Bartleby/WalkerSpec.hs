@@ -21,6 +21,7 @@ defaultConfig = Config
   , cfgTextPreviewBytes  = 4096
   , cfgGophermapFilename = ".gophermap"
   , cfgItemTypes         = defaultItemTypes
+  , cfgIncludeDotfiles   = False
   }
 
 findWork :: T.Text -> [Work] -> Maybe Work
@@ -31,6 +32,52 @@ findCls t = find (\c -> clsTitle c == t)
 
 spec :: Spec
 spec = describe "Bartleby.Walker" $ do
+
+  describe "shouldWalk" $ do
+    it "skips dotfiles when include_dotfiles=False" $
+      Walker.shouldWalk False False ".plan" `shouldBe` False
+
+    it "includes dotfiles when include_dotfiles=True" $
+      Walker.shouldWalk True  False ".plan" `shouldBe` True
+
+    it "always skips .git regardless of the flag" $ do
+      Walker.shouldWalk False False ".git" `shouldBe` False
+      Walker.shouldWalk True  False ".git" `shouldBe` False
+
+    it "always skips .DS_Store regardless of the flag" $ do
+      Walker.shouldWalk False False ".DS_Store" `shouldBe` False
+      Walker.shouldWalk True  False ".DS_Store" `shouldBe` False
+
+    it "always skips .hg, .svn, .bzr even with include_dotfiles=True" $
+      map (Walker.shouldWalk True False) [".hg", ".svn", ".bzr"]
+        `shouldBe` [False, False, False]
+
+    it "regular files are walked in either mode" $ do
+      Walker.shouldWalk False False "regular.txt" `shouldBe` True
+      Walker.shouldWalk True  False "regular.txt" `shouldBe` True
+
+    it "root reservations apply regardless of dotfile flag" $ do
+      Walker.shouldWalk False True "catalog"        `shouldBe` False
+      Walker.shouldWalk True  True "catalog"        `shouldBe` False
+      Walker.shouldWalk True  True "bartleby.conf"  `shouldBe` False
+
+    it "non-root: catalog is just a normal directory name" $
+      Walker.shouldWalk False False "catalog" `shouldBe` True
+
+  describe "walkLibrary with the dotfiles fixture" $ do
+    let dotFixture  = "test/fixtures/walker/dotfiles"
+        hideConfig  = defaultConfig { cfgIncludeDotfiles = False }
+        showConfig  = defaultConfig { cfgIncludeDotfiles = True }
+
+    it "skips .plan when include_dotfiles=False" $ do
+      (Library root, _) <- Walker.walkLibrary dotFixture hideConfig
+      map workTitle (clsWorks root) `shouldNotContain` [".plan"]
+      map workTitle (clsWorks root) `shouldContain`    ["regular.txt"]
+
+    it "includes .plan when include_dotfiles=True" $ do
+      (Library root, _) <- Walker.walkLibrary dotFixture showConfig
+      map workTitle (clsWorks root) `shouldContain` [".plan"]
+      map workTitle (clsWorks root) `shouldContain` ["regular.txt"]
 
   describe "walkLibrary on the basic fixture" $ do
 
