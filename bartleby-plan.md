@@ -227,7 +227,7 @@ item_types:
 | `feed_count`         | no       | 50            | Entries per atom feed                 |
 | `text_preview_bytes` | no       | 4096          | Upper bound for text-work content reads (used by atom `<content>` and the first-paragraph description fallback) |
 | `gophermap_filename` | no       | `.gophermap`  | The name written for each classification's menu file. Default matches Venusia/pygopherd; set to `gophermap` (no leading dot) for gophernicus, Pituophis, or Bucktooth. Must not be empty, contain `/`, `\`, or NUL, or be exactly `.` or `..` |
-| `item_types`         | no       | (built-ins)   | Mapping of `.ext` → single-char gopher item type (`0`, `I`, `g`, `s`, `h`, `9`). Entries are layered on top of the built-in table from the next section; user values win. Keys must start with `.`, are normalized to lowercase, and may not contain `/`, `\`, or NUL. The directory type `1` is rejected — directories are not extension-driven. |
+| `item_types`         | no       | (built-ins)   | Mapping of `.ext` → single-char gopher item type (`0`, `1`, `I`, `g`, `s`, `h`, `9`). Entries are layered on top of the built-in table from the next section; user values win. Keys must start with `.`, are normalized to lowercase, and may not contain `/`, `\`, or NUL. The menu type `1` is allowed for CGI scripts or other executables that emit a gopher menu. |
 
 The library's own title is the basename of the library directory,
 just as any sub-classification's title is its directory name. The
@@ -310,7 +310,8 @@ item_types:
   .wad:  "9"      # new: WAD archives → binary
   .midi: "s"      # new: MIDI → sound
   .nfo:  "0"      # new: NFO files → text
-  .md:   "h"      # override: render Markdown as HTML instead of text
+  .cgi:  "1"     # new: CGI scripts that emit a menu → type 1
+  .md:   "h"     # override: render Markdown as HTML instead of text
 ```
 
 Semantics:
@@ -320,9 +321,10 @@ Semantics:
   declaring it — defaults remain in force.
 - **Keys.** Must start with `.`, are normalized to lowercase. No
   separators (`/`, `\`, NUL).
-- **Values.** Single-character gopher type codes: `0`, `I`, `g`, `s`,
-  `h`, `9`. The directory code `1` is rejected — directories are not
-  driven by file extensions.
+- **Values.** Single-character gopher type codes: `0`, `1`, `I`, `g`,
+  `s`, `h`, `9`. `1` (menu) is the right choice for CGI scripts or
+  other executables whose output the gopher daemon will serve as a
+  menu — bartleby just emits the type char, the daemon does the rest.
 - **Multi-dot files.** Extension comes from `takeExtension`, so
   `foo.tar.gz` matches `.gz`, not `.tar.gz`. To re-type a
   double-extension file, give it the right top-level extension or

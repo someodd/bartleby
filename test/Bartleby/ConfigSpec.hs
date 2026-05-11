@@ -149,9 +149,16 @@ spec = describe "Bartleby.Config" $ do
       Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  \".a/b\": \"9\"\n")
         `shouldSatisfy` isLeft
 
-    it "rejects value \"1\" (directory)" $
-      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  .x: \"1\"\n")
-        `shouldSatisfy` isLeft
+    it "accepts value \"1\" (menu — for CGI scripts that emit a gopher menu)" $ do
+      let yaml = BS8.pack $ unlines
+            [ "hostname: a"
+            , "item_types:"
+            , "  .cgi: \"1\""
+            ]
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) ->
+          Map.lookup ".cgi" (cfgItemTypes cfg) `shouldBe` Just Type1
 
     it "rejects an unknown type char" $
       Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  .x: \"q\"\n")

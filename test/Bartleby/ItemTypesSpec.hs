@@ -33,16 +33,12 @@ spec = describe "Bartleby.ItemTypes" $ do
 
   describe "parseItemTypeChar" $ do
     it "accepts \"0\""  $ parseItemTypeChar "0" `shouldBe` Right Type0
+    it "accepts \"1\""  $ parseItemTypeChar "1" `shouldBe` Right Type1
     it "accepts \"I\""  $ parseItemTypeChar "I" `shouldBe` Right TypeI
     it "accepts \"g\""  $ parseItemTypeChar "g" `shouldBe` Right TypeG
     it "accepts \"s\""  $ parseItemTypeChar "s" `shouldBe` Right TypeS
     it "accepts \"h\""  $ parseItemTypeChar "h" `shouldBe` Right TypeH
     it "accepts \"9\""  $ parseItemTypeChar "9" `shouldBe` Right Type9
-
-    it "rejects \"1\" with a directory-specific message" $
-      case parseItemTypeChar "1" of
-        Left msg -> msg `shouldContain` "directory"
-        Right _  -> expectationFailure "expected '1' to be rejected"
 
     it "rejects an unknown single char"   $ parseItemTypeChar "x"    `shouldSatisfy` isLeft
     it "rejects an empty string"          $ parseItemTypeChar ""     `shouldSatisfy` isLeft

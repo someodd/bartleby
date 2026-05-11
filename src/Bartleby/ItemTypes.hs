@@ -51,11 +51,12 @@ normalizeExtension :: String -> Text
 normalizeExtension = T.pack . map toLower
 
 -- | The Gopher item-type codes accepted in @item_types@ values.
--- 'Type1' (directory) is deliberately excluded: directories are not
--- driven by file extensions.
+-- 'Type1' (menu) is included so users can mark CGI scripts or other
+-- executables that emit a gopher menu.
 acceptedItemTypeChars :: [(Char, ItemType)]
 acceptedItemTypeChars =
   [ ('0', Type0)
+  , ('1', Type1)
   , ('I', TypeI)
   , ('g', TypeG)
   , ('s', TypeS)
@@ -65,16 +66,12 @@ acceptedItemTypeChars =
 
 -- | Parse a user-supplied item-type code (e.g. @"0"@, @"I"@). The
 -- input must be a single-character string from
--- 'acceptedItemTypeChars'. Anything else — including @"1"@
--- (directory), an empty string, or a multi-character string — is a
--- 'Left' with a human-readable explanation.
+-- 'acceptedItemTypeChars'.
 parseItemTypeChar :: Text -> Either String ItemType
 parseItemTypeChar t = case T.unpack t of
   [c] -> case lookup c acceptedItemTypeChars of
     Just it -> Right it
-    Nothing
-      | c == '1'  -> Left "'1' (directory) is not allowed; directories are not driven by file extensions"
-      | otherwise -> Left (unexpected c)
+    Nothing -> Left (unexpected c)
   _ -> Left ("expected a single-character item-type code (one of " ++ valid ++ "), got " ++ show t)
   where
     unexpected c = "unknown item-type code " ++ show c
