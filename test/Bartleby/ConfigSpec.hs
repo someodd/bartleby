@@ -20,7 +20,7 @@ spec = describe "Bartleby.Config" $ do
         Right (cfg, warns) -> do
           cfgHostname          cfg `shouldBe` "gopher.example.com"
           cfgPort              cfg `shouldBe` 70
-          cfgSelector          cfg `shouldBe` Selector "/"
+          cfgSelector          cfg `shouldBe` Selector ""
           cfgRecentCount       cfg `shouldBe` 10
           cfgFeedCount         cfg `shouldBe` 50
           cfgTextPreviewBytes  cfg `shouldBe` 4096
@@ -215,11 +215,14 @@ spec = describe "Bartleby.Config" $ do
 
   describe "normalizeSelector" $ do
 
-    it "returns \"/\" for an empty input" $
-      Config.normalizeSelector "" `shouldBe` Selector "/"
+    it "returns \"\" (root) for an empty input" $
+      Config.normalizeSelector "" `shouldBe` Selector ""
 
-    it "preserves a lone slash" $
-      Config.normalizeSelector "/" `shouldBe` Selector "/"
+    it "returns \"\" (root) for a lone slash" $
+      Config.normalizeSelector "/" `shouldBe` Selector ""
+
+    it "returns \"\" (root) for multiple slashes" $
+      Config.normalizeSelector "///" `shouldBe` Selector ""
 
     it "adds a leading slash if missing" $
       Config.normalizeSelector "library" `shouldBe` Selector "/library"

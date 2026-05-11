@@ -173,12 +173,22 @@ validateExtKey raw
   where
     badChar c = c == '/' || c == '\\' || c == '\0'
 
--- | Normalize a selector string: ensure a leading slash, strip
--- trailing slashes, preserve \"\/\" as the root form.
+-- | Normalize a selector string.
+--
+-- The result is either:
+--
+-- * the empty string, meaning "the gopherhole root" (i.e. the user
+--   wrote @\/@, @\"\"@, @\/\/\/@, or similar), or
+--
+-- * a value with a leading @\/@ and no trailing @\/@.
+--
+-- Storing the root as @\"\"@ rather than @\"\/\"@ lets the URL
+-- builders in 'Bartleby.Atom' and 'Bartleby.Gophermap' do plain
+-- concatenation (@selector \<\> \"\/...\"@) without producing a
+-- doubled @\/\/@ when the library lives at the gopherhole root.
 normalizeSelector :: Text -> Selector
 normalizeSelector raw =
   let prefixed = case T.uncons raw of
         Just ('/', _) -> raw
         _             -> T.cons '/' raw
-      stripped = T.dropWhileEnd (== '/') prefixed
-  in Selector (if T.null stripped then "/" else stripped)
+  in Selector (T.dropWhileEnd (== '/') prefixed)
