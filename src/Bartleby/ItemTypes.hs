@@ -17,7 +17,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as T
-import System.FilePath (takeExtension)
+import System.FilePath (takeExtension, takeFileName)
 
 -- | The built-in extension → item-type table. Users can extend or
 -- override this via the @item_types@ field in @bartleby.conf@; the
@@ -36,12 +36,20 @@ defaultItemTypes = Map.fromList $
   [ (e, TypeS) | e <- [".wav", ".mp3", ".ogg", ".flac"] ] ++
   [ (e, TypeH) | e <- [".html", ".htm"] ]
 
--- | Look up the item type for a file path. The extension is taken
--- via 'takeExtension' and lowercased; anything not present in the
--- map falls back to 'Type9' (binary).
+-- | Look up the item type for a file path.
+--
+-- The extension (as returned by 'takeExtension') is the primary
+-- lookup key. For an extensionless dotfile like @.plan@ or
+-- @.gitignore@ — where 'takeExtension' returns @""@ — the whole
+-- basename is used instead, so users can configure them via
+-- @item_types: { .plan: \"0\" }@. Anything not present in the map
+-- falls back to 'Type9' (binary).
 lookupItemType :: Map Text ItemType -> FilePath -> ItemType
 lookupItemType m path =
-  Map.findWithDefault Type9 (normalizeExtension (takeExtension path)) m
+  let key = case (takeExtension path, takeFileName path) of
+        ("", n@('.':_:_)) -> n   -- extensionless dotfile (".plan", ".gitignore")
+        (ext, _)          -> ext
+  in Map.findWithDefault Type9 (normalizeExtension key) m
 
 -- | Normalize an extension string to the form used as a map key:
 -- ASCII-lowercased 'Text'. Caller is responsible for ensuring the
