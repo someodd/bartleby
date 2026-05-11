@@ -51,11 +51,11 @@ parseConfig bs = do
 fromObject :: KeyMap.KeyMap Value -> Either String (Config, [Warning])
 fromObject obj = do
   hostname <- requireText "hostname"
-  port     <- optInt  "port"               70   >>= validatePort
+  port     <- optInt  "port"               defaultPort             >>= validatePort
   rawSel   <- optText "selector"           "/"
-  recent   <- optInt  "recent_count"       10   >>= nonNeg "recent_count"
-  feed     <- optInt  "feed_count"         50   >>= nonNeg "feed_count"
-  preview  <- optInt  "text_preview_bytes" 4096 >>= nonNeg "text_preview_bytes"
+  recent   <- optInt  "recent_count"       defaultRecentCount      >>= nonNeg "recent_count"
+  feed     <- optInt  "feed_count"         defaultFeedCount        >>= nonNeg "feed_count"
+  preview  <- optInt  "text_preview_bytes" defaultTextPreviewBytes >>= nonNeg "text_preview_bytes"
   mapName  <- optText "gophermap_filename" ".gophermap"
               >>= validateGophermapFilename
   overrides <- parseItemTypesField (look "item_types")

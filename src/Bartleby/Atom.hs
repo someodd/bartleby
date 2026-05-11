@@ -11,7 +11,7 @@ module Bartleby.Atom
   , cdataWrap
   ) where
 
-import Bartleby.Preview (summarizeDescription)
+import Bartleby.Preview (summarizeDescription, summaryLineLength)
 import Bartleby.Types
 
 import Data.Function (on)
@@ -92,7 +92,7 @@ renderEntry config w = T.concat
   , indent2 (element "updated"   (isoDateTime (workUpdated w)))
   , entryAlternateLink config w
   , indent2 ("<summary type=\"text\">"
-               <> xmlEscape (summarizeDescription 70 (workDescription w))
+               <> xmlEscape (summarizeDescription summaryLineLength (workDescription w))
                <> "</summary>\n")
   , renderContent config w
   , "  </entry>\n"

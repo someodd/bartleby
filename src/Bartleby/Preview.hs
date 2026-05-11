@@ -15,6 +15,7 @@ module Bartleby.Preview
   , utf8SafePrefix
   , firstParagraph
   , summarizeDescription
+  , summaryLineLength
   ) where
 
 import Data.ByteString (ByteString)
@@ -67,6 +68,14 @@ firstParagraph input =
       t3 = T.dropWhile (== '\n') t2
       (para, _rest) = T.breakOn "\n\n" t3
   in para
+
+-- | The codepoint budget for a one-line description excerpt.
+--
+-- Matches the conventional gopher menu line width and is reused
+-- by both the catalog gophermap's per-work info line and the
+-- atom feed's @<summary>@ so the two stay in lockstep.
+summaryLineLength :: Int
+summaryLineLength = 70
 
 -- | Shape a work description into a one-line excerpt.
 --

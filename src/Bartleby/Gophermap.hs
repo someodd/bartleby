@@ -10,7 +10,7 @@ module Bartleby.Gophermap
   , itemTypeChar
   ) where
 
-import Bartleby.Preview (summarizeDescription)
+import Bartleby.Preview (summarizeDescription, summaryLineLength)
 import Bartleby.Types
 
 import Data.Function (on)
@@ -152,13 +152,13 @@ renderSubCls config sub =
   in line <> desc
 
 -- | One info line showing a description, shaped by
--- 'summarizeDescription' (whitespace collapsed, truncated to 70
--- codepoints with @...@). Omitted entirely when the description is
--- empty.
+-- 'summarizeDescription' (whitespace collapsed, truncated to
+-- 'summaryLineLength' codepoints with @...@). Omitted entirely
+-- when the description is empty.
 renderDescInfoLine :: Text -> Text
 renderDescInfoLine "" = ""
 renderDescInfoLine desc =
-  VM.info ("  " <> summarizeDescription 70 desc)
+  VM.info ("  " <> summarizeDescription summaryLineLength desc)
 
 ------------------------------------------------------------------------
 -- Helpers
