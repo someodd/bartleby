@@ -9,12 +9,16 @@ module Bartleby.Config
   , normalizeSelector
   ) where
 
+import Bartleby.ItemTypes (defaultItemTypes, parseItemTypeChar)
 import Bartleby.Types
 import qualified Data.Aeson as Aeson
 import Data.Aeson (Value (..))
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
 import Data.ByteString (ByteString)
+import qualified Data.Char as C
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
@@ -30,6 +34,7 @@ knownFields =
   , "feed_count"
   , "text_preview_bytes"
   , "gophermap_filename"
+  , "item_types"
   ]
 
 -- | Parse a bytes blob as bartleby.conf, returning either a fatal
@@ -52,6 +57,7 @@ fromObject obj = do
   preview  <- optInt  "text_preview_bytes" 4096 >>= nonNeg "text_preview_bytes"
   mapName  <- optText "gophermap_filename" ".gophermap"
               >>= validateGophermapFilename
+  overrides <- parseItemTypesField (look "item_types")
   let warnings =
         [ Warning "bartleby.conf" ("unknown field: " <> Key.toText k)
         | k <- KeyMap.keys obj
@@ -65,6 +71,7 @@ fromObject obj = do
            , cfgFeedCount         = feed
            , cfgTextPreviewBytes  = preview
            , cfgGophermapFilename = mapName
+           , cfgItemTypes         = Map.union overrides defaultItemTypes
            }
        , warnings
        )
@@ -110,6 +117,55 @@ validateGophermapFilename name
   | otherwise        = Right name
   where
     bad c = c == '/' || c == '\\' || c == '\0'
+
+-- | Parse the @item_types@ field. Absent → empty (caller merges with
+-- the built-in defaults). Anything other than a YAML mapping is a
+-- fatal parse error; per-entry validation rejects bad keys (must
+-- start with @.@, no path separators) and bad values (must be a
+-- single-character item-type code in @0 I g s h 9@; @1@ is
+-- specifically rejected as a directory marker).
+parseItemTypesField :: Maybe Value -> Either String (Map Text ItemType)
+parseItemTypesField Nothing  = Right Map.empty
+parseItemTypesField (Just v) = case v of
+  Object kv ->
+    Map.fromList <$> mapM parseEntry (KeyMap.toList kv)
+  _ ->
+    Left "field 'item_types': must be a YAML mapping of \".ext\" → \"<type-char>\""
+  where
+    parseEntry (k, val) = do
+      let rawKey = Key.toText k
+      ext <- validateExtKey rawKey
+      itype <- case val of
+        String s -> withKey rawKey (parseItemTypeChar s)
+        _        -> Left ("field 'item_types': value for key "
+                          ++ show (T.unpack rawKey)
+                          ++ " must be a string")
+      Right (ext, itype)
+
+    withKey :: Text -> Either String a -> Either String a
+    withKey k = either
+      (\msg -> Left ("field 'item_types' key "
+                     ++ show (T.unpack k) ++ ": " ++ msg))
+      Right
+
+-- | Validate an extension key from @item_types@. Returns the
+-- lowercased form for storage. Rejects empty strings, keys without
+-- a leading dot, and keys containing path separators or NUL.
+validateExtKey :: Text -> Either String Text
+validateExtKey raw
+  | T.null raw            = Left "field 'item_types': extension key must not be empty"
+  | T.head raw /= '.'     = Left ("field 'item_types': extension key "
+                                  ++ show (T.unpack raw)
+                                  ++ " must start with '.'")
+  | T.length raw < 2      = Left ("field 'item_types': extension key "
+                                  ++ show (T.unpack raw)
+                                  ++ " must be more than just '.'")
+  | T.any badChar raw     = Left ("field 'item_types': extension key "
+                                  ++ show (T.unpack raw)
+                                  ++ " must not contain '/', '\\', or NUL")
+  | otherwise             = Right (T.map C.toLower raw)
+  where
+    badChar c = c == '/' || c == '\\' || c == '\0'
 
 -- | Normalize a selector string: ensure a leading slash, strip
 -- trailing slashes, preserve \"\/\" as the root form.

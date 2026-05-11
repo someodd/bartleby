@@ -16,16 +16,15 @@
 --   so the renderer never re-walks the tree.
 module Bartleby.Walker
   ( walkLibrary
-  , itemTypeFor
   ) where
 
 import Bartleby.BCard (parseBCard)
+import Bartleby.ItemTypes (lookupItemType)
 import qualified Bartleby.Preview as Preview
 import Bartleby.Types
 
 import Control.Monad (forM)
 import qualified Data.ByteString as BS
-import Data.Char (toLower)
 import Data.List (isSuffixOf, sort)
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe, mapMaybe)
@@ -41,7 +40,7 @@ import System.Directory
   , listDirectory
   , pathIsSymbolicLink
   )
-import System.FilePath ((</>), takeExtension, takeFileName)
+import System.FilePath ((</>), takeFileName)
 
 -- | Walk a library directory and produce a fully-populated 'Library'.
 -- The root directory's basename becomes the root classification's title.
@@ -51,24 +50,6 @@ walkLibrary libraryRoot config = do
   let rootTitle = T.pack (takeFileName absRoot)
   (rootCls, ws) <- walkClassification config absRoot rootTitle "" True Nothing
   pure (Library rootCls, ws)
-
--- | Map a file extension to a gopher item type.
-itemTypeFor :: FilePath -> ItemType
-itemTypeFor path = case map toLower (takeExtension path) of
-  ".txt"  -> Type0 ; ".md"   -> Type0 ; ".asc"  -> Type0
-  ".org"  -> Type0 ; ".rst"  -> Type0 ; ".log"  -> Type0
-  ".csv"  -> Type0 ; ".yml"  -> Type0 ; ".yaml" -> Type0
-  ".json" -> Type0 ; ".xml"  -> Type0 ; ".ini"  -> Type0
-  ".conf" -> Type0 ; ".py"   -> Type0 ; ".hs"   -> Type0
-  ".rb"   -> Type0 ; ".js"   -> Type0 ; ".c"    -> Type0
-  ".h"    -> Type0 ; ".cpp"  -> Type0 ; ".sh"   -> Type0
-  ".gif"  -> TypeG
-  ".jpg"  -> TypeI ; ".jpeg" -> TypeI ; ".png"  -> TypeI
-  ".webp" -> TypeI ; ".bmp"  -> TypeI ; ".svg"  -> TypeI
-  ".wav"  -> TypeS ; ".mp3"  -> TypeS ; ".ogg"  -> TypeS
-  ".flac" -> TypeS
-  ".html" -> TypeH ; ".htm"  -> TypeH
-  _       -> Type9
 
 -- | Whether a filesystem entry name should be descended into.
 shouldWalk :: Bool -> String -> Bool
@@ -209,7 +190,7 @@ buildFileWork config absPath relPath name mcard = do
   sizeBytes <- getFileSize absPath
   mtime     <- getModificationTime absPath
   let mDay     = utctDay mtime
-      itype    = itemTypeFor absPath
+      itype    = lookupItemType (cfgItemTypes config) absPath
       title    = fromMaybe name (mcard >>= cardTitle)
       created  = fromMaybe mDay  (mcard >>= cardCreated)
       updated  = fromMaybe created (mcard >>= cardUpdated)

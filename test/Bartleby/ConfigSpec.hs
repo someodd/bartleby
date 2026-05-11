@@ -1,9 +1,11 @@
 module Bartleby.ConfigSpec (spec) where
 
 import qualified Bartleby.Config as Config
+import Bartleby.ItemTypes (defaultItemTypes)
 import Bartleby.Types
 import qualified Data.ByteString.Char8 as BS8
 import Data.Either (isLeft)
+import qualified Data.Map.Strict as Map
 import Test.Hspec
 
 spec :: Spec
@@ -23,6 +25,7 @@ spec = describe "Bartleby.Config" $ do
           cfgFeedCount         cfg `shouldBe` 50
           cfgTextPreviewBytes  cfg `shouldBe` 4096
           cfgGophermapFilename cfg `shouldBe` ".gophermap"
+          cfgItemTypes         cfg `shouldBe` defaultItemTypes
           warns `shouldBe` []
 
     it "rejects config without hostname" $
@@ -89,6 +92,90 @@ spec = describe "Bartleby.Config" $ do
     it "rejects gophermap_filename = '..'" $
       Config.parseConfig (BS8.pack "hostname: a\ngophermap_filename: \"..\"\n")
         `shouldSatisfy` isLeft
+
+  describe "item_types" $ do
+
+    it "absent ⇒ merged map equals defaultItemTypes" $ do
+      let yaml = BS8.pack "hostname: a\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> cfgItemTypes cfg `shouldBe` defaultItemTypes
+
+    it "adds a new extension on top of defaults" $ do
+      let yaml = BS8.pack $ unlines
+            [ "hostname: a"
+            , "item_types:"
+            , "  .wad: \"9\""
+            ]
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> do
+          Map.lookup ".wad" (cfgItemTypes cfg) `shouldBe` Just Type9
+          -- defaults still present
+          Map.lookup ".txt" (cfgItemTypes cfg) `shouldBe` Just Type0
+
+    it "user override wins over a default" $ do
+      let yaml = BS8.pack $ unlines
+            [ "hostname: a"
+            , "item_types:"
+            , "  .md: \"h\""
+            ]
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) ->
+          Map.lookup ".md" (cfgItemTypes cfg) `shouldBe` Just TypeH
+
+    it "key is lowercased before storage" $ do
+      let yaml = BS8.pack $ unlines
+            [ "hostname: a"
+            , "item_types:"
+            , "  .MD: \"h\""
+            ]
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> do
+          Map.lookup ".md" (cfgItemTypes cfg) `shouldBe` Just TypeH
+          Map.lookup ".MD" (cfgItemTypes cfg) `shouldBe` Nothing
+
+    it "rejects a key without leading dot" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  wad: \"9\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects a key that is just \".\"" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  \".\": \"9\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects a key containing a slash" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  \".a/b\": \"9\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects value \"1\" (directory)" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  .x: \"1\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects an unknown type char" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  .x: \"q\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects a multi-character type value" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  .x: \"text\"\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects item_types as a list" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types:\n  - .wad\n")
+        `shouldSatisfy` isLeft
+
+    it "rejects item_types as a scalar" $
+      Config.parseConfig (BS8.pack "hostname: a\nitem_types: nope\n")
+        `shouldSatisfy` isLeft
+
+    it "treats a top-level typo (item_typs:) as an unknown-field warning" $ do
+      let yaml = BS8.pack "hostname: a\nitem_typs: x\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, warns) -> do
+          cfgItemTypes cfg `shouldBe` defaultItemTypes
+          length warns `shouldBe` 1
 
   describe "normalizeSelector" $ do
 

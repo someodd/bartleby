@@ -1,5 +1,6 @@
 module Bartleby.WalkerSpec (spec) where
 
+import Bartleby.ItemTypes (defaultItemTypes)
 import qualified Bartleby.Walker as Walker
 import Bartleby.Types
 import Data.List (find, sort)
@@ -19,6 +20,7 @@ defaultConfig = Config
   , cfgFeedCount         = 50
   , cfgTextPreviewBytes  = 4096
   , cfgGophermapFilename = ".gophermap"
+  , cfgItemTypes         = defaultItemTypes
   }
 
 findWork :: T.Text -> [Work] -> Maybe Work
@@ -29,13 +31,6 @@ findCls t = find (\c -> clsTitle c == t)
 
 spec :: Spec
 spec = describe "Bartleby.Walker" $ do
-
-  describe "itemTypeFor" $ do
-    it "maps .txt to Type0" $ Walker.itemTypeFor "x.txt"  `shouldBe` Type0
-    it "maps .jpg to TypeI" $ Walker.itemTypeFor "x.jpg"  `shouldBe` TypeI
-    it "maps .gif to TypeG" $ Walker.itemTypeFor "x.gif"  `shouldBe` TypeG
-    it "maps unknown to Type9" $ Walker.itemTypeFor "x.wat" `shouldBe` Type9
-    it "is case-insensitive" $ Walker.itemTypeFor "x.JPG" `shouldBe` TypeI
 
   describe "walkLibrary on the basic fixture" $ do
 

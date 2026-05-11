@@ -104,6 +104,10 @@ YAML, one per library, at the library root:
     feed_count: 50
     text_preview_bytes: 4096
     gophermap_filename: .gophermap   # set to "gophermap" for gophernicus/Pituophis/Bucktooth
+    item_types:                      # extend or override the default extension → gopher-type map
+      .wad:  "9"
+      .epub: "9"
+      .nfo:  "0"
 
 Only `hostname` is required. Everything else has the defaults shown.
 The library's own title is the basename of the library directory —

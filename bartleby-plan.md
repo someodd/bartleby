@@ -209,6 +209,13 @@ selector:     /library
 recent_count:        10
 feed_count:          50
 text_preview_bytes:  4096
+
+# Extend or override the default extension → gopher-type map
+item_types:
+  .wad:  "9"
+  .epub: "9"
+  .nfo:  "0"
+  .md:   "h"      # override a default
 ```
 
 | Field                | Required | Default       | Notes                                 |
@@ -220,6 +227,7 @@ text_preview_bytes:  4096
 | `feed_count`         | no       | 50            | Entries per atom feed                 |
 | `text_preview_bytes` | no       | 4096          | Upper bound for text-work content reads (used by atom `<content>` and the first-paragraph description fallback) |
 | `gophermap_filename` | no       | `.gophermap`  | The name written for each classification's menu file. Default matches Venusia/pygopherd; set to `gophermap` (no leading dot) for gophernicus, Pituophis, or Bucktooth. Must not be empty, contain `/`, `\`, or NUL, or be exactly `.` or `..` |
+| `item_types`         | no       | (built-ins)   | Mapping of `.ext` → single-char gopher item type (`0`, `I`, `g`, `s`, `h`, `9`). Entries are layered on top of the built-in table from the next section; user values win. Keys must start with `.`, are normalized to lowercase, and may not contain `/`, `\`, or NUL. The directory type `1` is rejected — directories are not extension-driven. |
 
 The library's own title is the basename of the library directory,
 just as any sub-classification's title is its directory name. The
@@ -292,6 +300,34 @@ File extensions map to gopher item types (case-insensitive):
 
 Directory-works always render as type `1`. Generated `feed.xml` renders
 as type `0` (it is text, plain XML, readable in a gopher client).
+
+This table is the **default** and is shipped with bartleby. A library
+can extend or override it with the `item_types` field of
+`bartleby.conf`:
+
+```yaml
+item_types:
+  .wad:  "9"      # new: WAD archives → binary
+  .midi: "s"      # new: MIDI → sound
+  .nfo:  "0"      # new: NFO files → text
+  .md:   "h"      # override: render Markdown as HTML instead of text
+```
+
+Semantics:
+
+- **Additive.** User entries layer on top of the built-in table; user
+  values win on collision. Omitting `item_types` is the same as not
+  declaring it — defaults remain in force.
+- **Keys.** Must start with `.`, are normalized to lowercase. No
+  separators (`/`, `\`, NUL).
+- **Values.** Single-character gopher type codes: `0`, `I`, `g`, `s`,
+  `h`, `9`. The directory code `1` is rejected — directories are not
+  driven by file extensions.
+- **Multi-dot files.** Extension comes from `takeExtension`, so
+  `foo.tar.gz` matches `.gz`, not `.tar.gz`. To re-type a
+  double-extension file, give it the right top-level extension or
+  use a `.bcard` (per-file overrides via bcard are not implemented
+  yet).
 
 ---
 

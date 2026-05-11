@@ -74,4 +74,5 @@ tests:
       - directory
       - text
       - bytestring
+      - containers
       - time

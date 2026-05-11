@@ -1,6 +1,7 @@
 module Bartleby.AtomSpec (spec) where
 
 import qualified Bartleby.Atom as Atom
+import Bartleby.ItemTypes (defaultItemTypes)
 import Bartleby.Types
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -16,6 +17,7 @@ defaultConfig = Config
   , cfgFeedCount         = 50
   , cfgTextPreviewBytes  = 4096
   , cfgGophermapFilename = ".gophermap"
+  , cfgItemTypes         = defaultItemTypes
   }
 
 emptyCls :: Text -> Classification

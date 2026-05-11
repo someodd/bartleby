@@ -28,6 +28,7 @@ module Bartleby.Types
   , defaultTextPreviewBytes
   ) where
 
+import Data.Map.Strict (Map)
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
 
@@ -99,6 +100,10 @@ data Config = Config
   , cfgFeedCount         :: !Int      -- ^ non-negative
   , cfgTextPreviewBytes  :: !Int      -- ^ non-negative
   , cfgGophermapFilename :: !Text     -- ^ name for each menu file (default ".gophermap")
+  , cfgItemTypes         :: !(Map Text ItemType)
+    -- ^ merged extension → item-type map (built-in defaults overlaid
+    -- with any user-supplied @item_types@ from bartleby.conf).
+    -- Keys are lowercase and start with @\".\"@.
   } deriving (Show, Eq)
 
 -- | Parsed @.bcard@. Every field is optional at the schema level.
