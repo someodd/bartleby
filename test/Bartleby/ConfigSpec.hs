@@ -21,6 +21,8 @@ spec = describe "Bartleby.Config" $ do
           cfgHostname          cfg `shouldBe` "gopher.example.com"
           cfgPort              cfg `shouldBe` 70
           cfgSelector          cfg `shouldBe` Selector ""
+          cfgTitle             cfg `shouldBe` Nothing
+          cfgDescription       cfg `shouldBe` Nothing
           cfgRecentCount       cfg `shouldBe` 10
           cfgFeedCount         cfg `shouldBe` 50
           cfgTextPreviewBytes  cfg `shouldBe` 4096
@@ -184,6 +186,36 @@ spec = describe "Bartleby.Config" $ do
         Right (cfg, warns) -> do
           cfgItemTypes cfg `shouldBe` defaultItemTypes
           length warns `shouldBe` 1
+
+  describe "title / description" $ do
+
+    it "parses a title and surfaces it via cfgTitle" $ do
+      let yaml = BS8.pack "hostname: a\ntitle: My Library\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, warns) -> do
+          cfgTitle cfg `shouldBe` Just "My Library"
+          warns    `shouldBe` []
+
+    it "parses a description and surfaces it via cfgDescription" $ do
+      let yaml = BS8.pack "hostname: a\ndescription: A small library.\n"
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (cfg, _) -> cfgDescription cfg `shouldBe` Just "A small library."
+
+    it "does not warn when title and description are present (known fields)" $ do
+      let yaml = BS8.pack $ unlines
+            [ "hostname: a"
+            , "title: T"
+            , "description: D"
+            ]
+      case Config.parseConfig yaml of
+        Left e -> expectationFailure e
+        Right (_, warns) -> warns `shouldBe` []
+
+    it "rejects a non-string title" $
+      Config.parseConfig (BS8.pack "hostname: a\ntitle: 123\n")
+        `shouldSatisfy` isLeft
 
   describe "include_dotfiles" $ do
 

@@ -30,6 +30,8 @@ knownFields =
   [ "hostname"
   , "port"
   , "selector"
+  , "title"
+  , "description"
   , "recent_count"
   , "feed_count"
   , "text_preview_bytes"
@@ -53,6 +55,8 @@ fromObject obj = do
   hostname <- requireText "hostname"
   port     <- optInt  "port"               defaultPort             >>= validatePort
   rawSel   <- optText "selector"           "/"
+  title    <- optMaybeText "title"
+  desc     <- optMaybeText "description"
   recent   <- optInt  "recent_count"       defaultRecentCount      >>= nonNeg "recent_count"
   feed     <- optInt  "feed_count"         defaultFeedCount        >>= nonNeg "feed_count"
   preview  <- optInt  "text_preview_bytes" defaultTextPreviewBytes >>= nonNeg "text_preview_bytes"
@@ -69,6 +73,8 @@ fromObject obj = do
            { cfgHostname          = hostname
            , cfgPort              = port
            , cfgSelector          = normalizeSelector rawSel
+           , cfgTitle             = title
+           , cfgDescription       = desc
            , cfgRecentCount       = recent
            , cfgFeedCount         = feed
            , cfgTextPreviewBytes  = preview
@@ -89,6 +95,9 @@ fromObject obj = do
 
     optText :: Text -> Text -> Either String Text
     optText k def = maybe (Right def) (fromJ k) (look k)
+
+    optMaybeText :: Text -> Either String (Maybe Text)
+    optMaybeText k = maybe (Right Nothing) (fmap Just . fromJ k) (look k)
 
     optInt :: Text -> Int -> Either String Int
     optInt k def = maybe (Right def) (fromJ k) (look k)

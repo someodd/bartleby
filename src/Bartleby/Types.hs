@@ -90,12 +90,22 @@ data WorkKind
   | WorkDirectory
   deriving (Show, Eq)
 
--- | Parsed @bartleby.conf@. The library's own title is derived from
--- the library directory's basename, not stored here.
+-- | Parsed @bartleby.conf@. The library's own title comes from
+-- 'cfgTitle' when set; otherwise the walker falls back to the
+-- library directory's basename.
 data Config = Config
   { cfgHostname          :: !Text
   , cfgPort              :: !Int      -- ^ 1..65535
   , cfgSelector          :: !Selector -- ^ normalized
+  , cfgTitle             :: !(Maybe Text)
+    -- ^ Optional override for the root classification's title.
+    -- The root has no sibling @.bcard@, so its title lives in the
+    -- conf instead. 'Nothing' means \"use the library directory
+    -- basename.\"
+  , cfgDescription       :: !(Maybe Text)
+    -- ^ Optional description for the root classification, rendered
+    -- in the root gophermap's header block and the root atom feed's
+    -- @\<subtitle\>@.
   , cfgRecentCount       :: !Int      -- ^ non-negative
   , cfgFeedCount         :: !Int      -- ^ non-negative
   , cfgTextPreviewBytes  :: !Int      -- ^ non-negative

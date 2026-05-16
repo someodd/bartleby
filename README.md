@@ -100,6 +100,8 @@ YAML, one per library, at the library root:
     hostname: gopher.someodd.zip
     port: 70
     selector: /library
+    title: My Personal Library       # optional override for the root title
+    description: A small library.    # optional, shown in the root header
     recent_count: 10
     feed_count: 50
     text_preview_bytes: 4096
@@ -111,8 +113,11 @@ YAML, one per library, at the library root:
     include_dotfiles: false          # set true to expose .plan, .signature, etc.
 
 Only `hostname` is required. Everything else has the defaults shown.
-The library's own title is the basename of the library directory —
-the root is not metadata-special.
+`title` and `description` are the library root's metadata — every
+non-root classification carries its own metadata via a sibling
+`.bcard`, but the root has no sibling, so its title and description
+live here. Absent `title` falls back to the library directory's
+basename.
 
 For deeper detail (warnings, UTF-8 semantics, catalog layout, atom
 feed structure), see `bartleby-plan.md`.

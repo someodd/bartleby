@@ -44,13 +44,21 @@ import System.Directory
 import System.FilePath ((</>), takeFileName)
 
 -- | Walk a library directory and produce a fully-populated 'Library'.
--- The root directory's basename becomes the root classification's title.
+-- The root classification's title comes from 'cfgTitle' when set,
+-- falling back to the library directory's basename; an optional
+-- 'cfgDescription' is grafted onto the root after the recursive walk.
+-- This is the only site where root-specific config is injected; the
+-- recursive 'walkClassification' is uniform across root and non-root.
 walkLibrary :: FilePath -> Config -> IO (Library, [Warning])
 walkLibrary libraryRoot config = do
   absRoot <- canonicalizePath libraryRoot
-  let rootTitle = T.pack (takeFileName absRoot)
+  let basename  = T.pack (takeFileName absRoot)
+      rootTitle = fromMaybe basename (cfgTitle config)
   (rootCls, ws) <- walkClassification config absRoot rootTitle "" True Nothing
-  pure (Library rootCls, ws)
+  let rootCls' = case cfgDescription config of
+        Just d  -> rootCls { clsDescription = d }
+        Nothing -> rootCls
+  pure (Library rootCls', ws)
 
 -- | Whether a filesystem entry name should be descended into.
 shouldWalk :: Bool -> Bool -> String -> Bool

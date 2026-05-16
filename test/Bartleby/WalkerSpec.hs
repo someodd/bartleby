@@ -16,6 +16,8 @@ defaultConfig = Config
   { cfgHostname          = "gopher.example.com"
   , cfgPort              = 70
   , cfgSelector          = Selector "/library"
+  , cfgTitle             = Nothing
+  , cfgDescription       = Nothing
   , cfgRecentCount       = 10
   , cfgFeedCount         = 50
   , cfgTextPreviewBytes  = 4096
@@ -183,3 +185,30 @@ spec = describe "Bartleby.Walker" $ do
       (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
       -- walker sorts by filesystem entry name, not display title.
       map clsSourcePath (clsSubs root) `shouldBe` sort (map clsSourcePath (clsSubs root))
+
+  describe "walkLibrary root metadata from config" $ do
+    let withTitle = defaultConfig { cfgTitle = Just "My Personal Library" }
+        withDesc  = defaultConfig { cfgDescription = Just "A small library." }
+        withBoth  = defaultConfig
+                      { cfgTitle = Just "My Personal Library"
+                      , cfgDescription = Just "A small library."
+                      }
+
+    it "uses cfgTitle for the root classification when set" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot withTitle
+      clsTitle root `shouldBe` "My Personal Library"
+
+    it "uses cfgDescription for the root classification when set" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot withDesc
+      clsDescription root `shouldBe` "A small library."
+
+    it "falls back to the directory basename when cfgTitle is Nothing" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot defaultConfig
+      clsTitle root `shouldBe` "basic"
+
+    it "does not affect sub-classifications" $ do
+      (Library root, _) <- Walker.walkLibrary fixtureRoot withBoth
+      -- Subs still get their own titles from siblings/dirname.
+      let titles = map clsTitle (clsSubs root)
+      titles `shouldContain` ["Recipes"]
+      titles `shouldContain` ["notes"]
