@@ -88,9 +88,19 @@ renderDescriptionLines desc =
 ------------------------------------------------------------------------
 -- Sections
 
+-- | Top-N recently-updated works drawn from this classification's
+-- sub-classifications only — the recursion-flat recency view,
+-- complementary to 'renderWorks' (which lists the works directly
+-- shelved here). Direct works are excluded by source: the walk
+-- starts at 'clsSubs cls', so 'clsWorks cls' is never visited and
+-- Class-Here Works can never overlap with Recent.
+--
+-- Auto-hides via 'null recent' whenever the sub-walk yields nothing
+-- (leaves with no subs, parents whose subs are all empty). No
+-- separate \"tiny library\" threshold — the dedup removes the
+-- duplication that threshold was guarding against.
 renderRecentAccessions :: Config -> Classification -> Text
 renderRecentAccessions config cls
-  | clsTotalWorks cls <= cfgRecentCount config = ""
   | null recent = ""
   | otherwise = T.concat
       [ VM.info "  Recent Accessions"
@@ -100,7 +110,8 @@ renderRecentAccessions config cls
       ]
   where
     recent = take (cfgRecentCount config) $
-      sortBy (flip compare `on` workUpdated) (allWorksRecursive cls)
+      sortBy (flip compare `on` workUpdated)
+             (concatMap allWorksRecursive (clsSubs cls))
 
 renderSubClassifications :: Config -> Classification -> Text
 renderSubClassifications config cls

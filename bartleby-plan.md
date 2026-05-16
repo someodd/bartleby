@@ -361,7 +361,7 @@ i
 i  <description line 1>
 i  <description line 2>
 i
-i  Recent Accessions                            ← omit if total_recursive_works ≤ recent_count
+i  Recent Accessions                            ← omit if no sub-classification contributes a work
 i  -----------------
 <top N recent works, each rendered as below>
 i
@@ -427,16 +427,20 @@ The `.` separator is the decimal point; no locale formatting.
 
 - Works within a section: `updated` desc; path asc for ties
 - Classifications: alphabetical (byte-order, locale-independent)
-- Recent Accessions: `updated` desc across the entire subtree, capped
-  at `recent_count`
+- Recent Accessions: `updated` desc across the sub-classifications'
+  subtrees (direct works at this level are excluded — they already
+  appear in Class-Here Works), capped at `recent_count`
 - A sub-classification's displayed "updated" date is the max `updated`
   among its recursive works. Empty sub-classifications display
   `(0 works)` with no date or size parenthetical.
 
 ### Section-omission rules
 
-- Skip Recent Accessions when `total_recursive_works ≤ recent_count`
-  (Class-Here Works already contains everything)
+- Skip Recent Accessions when no sub-classification contributes any
+  work (leaves, and parents whose subs are all empty). The dedup
+  against Class-Here Works is structural — direct works are never in
+  the source set — so the section only needs to hide when there is
+  literally nothing to render
 - Skip Classifications when there are none
 - Skip Class-Here Works when there are none directly in this
   classification (the DDC term: *class here* = class directly at

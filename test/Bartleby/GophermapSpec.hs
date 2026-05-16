@@ -138,19 +138,24 @@ spec = do
       rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "Class-Here Works"))
 
   describe "section ordering" $ do
-    -- A classification with both a sub-classification and enough works
-    -- to trigger Recent Accessions. The cfgRecentCount on
-    -- defaultConfig is 10, so we need clsTotalWorks > 10 for Recent
-    -- to show. Use a small recent_count to keep the fixture tiny.
+    -- Recent Accessions sources only from sub-classifications, so the
+    -- fixture's sub needs at least one work for Recent to render at
+    -- all. cfgRecentCount=1 keeps the output predictable.
     let smallRecent = defaultConfig { cfgRecentCount = 1 }
-        manyWorks   = [ sampleWork { workTitle = T.pack ("Work " <> show i)
+        manyWorks   = [ sampleWork { workTitle = T.pack ("Direct " <> show i)
                                    , workSourcePath = "w" <> show i <> ".jpg" }
                       | i <- [1 .. 3 :: Int] ]
-        sub         = (emptyClassification "Sub") { clsSourcePath = "sub" }
+        subWork     = sampleWork { workTitle = "Sub Work"
+                                 , workSourcePath = "sub/sw.jpg" }
+        sub         = (emptyClassification "Sub")
+                        { clsSourcePath = "sub"
+                        , clsWorks      = [subWork]
+                        , clsTotalWorks = 1
+                        }
         cls         = (emptyClassification "Top")
                         { clsSubs       = [sub]
                         , clsWorks      = manyWorks
-                        , clsTotalWorks = length manyWorks
+                        , clsTotalWorks = length manyWorks + clsTotalWorks sub
                         }
 
     it "renders Classifications before Class-Here Works" $ do
@@ -170,6 +175,79 @@ spec = do
           recentIdx = T.breakOn (T.pack "Recent Accessions") rendered
           feedIdx   = T.breakOn (T.pack "Atom feed")         rendered
       T.length (fst recentIdx) < T.length (fst feedIdx) `shouldBe` True
+
+  describe "Recent Accessions dedup" $ do
+    it "excludes direct works from Recent (they already appear in Class-Here Works)" $ do
+      let direct = sampleWork
+            { workTitle      = "Direct Item"
+            , workSourcePath = "direct.jpg"
+            , workUpdated    = fromGregorian 2026 5 10
+            }
+          subItem = sampleWork
+            { workTitle      = "Sub Item"
+            , workSourcePath = "sub/item.jpg"
+            , workUpdated    = fromGregorian 2026 5 9
+            }
+          sub = (emptyClassification "Sub")
+                  { clsSourcePath = "sub"
+                  , clsWorks      = [subItem]
+                  , clsTotalWorks = 1
+                  }
+          cls = (emptyClassification "Top")
+                  { clsSubs       = [sub]
+                  , clsWorks      = [direct]
+                  , clsTotalWorks = 1 + clsTotalWorks sub
+                  }
+          rendered          = Gophermap.renderClassification defaultConfig cls
+          (_, recentBlock)  = T.breakOn (T.pack "Recent Accessions") rendered
+      rendered    `shouldSatisfy` T.isInfixOf (T.pack "Direct Item")  -- in Class-Here Works
+      recentBlock `shouldSatisfy` T.isInfixOf (T.pack "Sub Item")
+      recentBlock `shouldSatisfy` (not . T.isInfixOf (T.pack "Direct Item"))
+
+    it "shows sub-works even when direct works are newer (filter is structural)" $ do
+      let direct = sampleWork
+            { workTitle      = "Newer Direct"
+            , workSourcePath = "newer.jpg"
+            , workUpdated    = fromGregorian 2026 5 16
+            }
+          subItem = sampleWork
+            { workTitle      = "Older Sub"
+            , workSourcePath = "sub/older.jpg"
+            , workUpdated    = fromGregorian 2026 1 1
+            }
+          sub = (emptyClassification "Sub")
+                  { clsSourcePath = "sub"
+                  , clsWorks      = [subItem]
+                  , clsTotalWorks = 1
+                  }
+          cls = (emptyClassification "Top")
+                  { clsSubs       = [sub]
+                  , clsWorks      = [direct]
+                  , clsTotalWorks = 1 + clsTotalWorks sub
+                  }
+          rendered         = Gophermap.renderClassification defaultConfig cls
+          (_, recentBlock) = T.breakOn (T.pack "Recent Accessions") rendered
+      rendered    `shouldSatisfy` T.isInfixOf (T.pack "Recent Accessions")
+      recentBlock `shouldSatisfy` T.isInfixOf (T.pack "Older Sub")
+      recentBlock `shouldSatisfy` (not . T.isInfixOf (T.pack "Newer Direct"))
+
+    it "omits Recent Accessions at a leaf classification with many works" $ do
+      -- Under the old behaviour this leaf would render Recent as a
+      -- prefix of Class-Here Works (20 > cfgRecentCount=10). Under
+      -- the new behaviour the source set is sub-only, which is empty
+      -- for a leaf, so 'null recent' fires and Recent is hidden.
+      let manyWorks = [ sampleWork
+                          { workTitle      = T.pack ("Item " <> show i)
+                          , workSourcePath = "i" <> show i <> ".jpg"
+                          }
+                      | i <- [1 .. 20 :: Int]
+                      ]
+          cls = (emptyClassification "Leaf")
+                  { clsWorks      = manyWorks
+                  , clsTotalWorks = length manyWorks
+                  }
+          rendered = Gophermap.renderClassification defaultConfig cls
+      rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "Recent Accessions"))
 
   describe "breadcrumb" $ do
     it "omits a breadcrumb at the root (empty clsSourcePath)" $ do
