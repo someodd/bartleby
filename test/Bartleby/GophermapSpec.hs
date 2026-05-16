@@ -170,3 +170,22 @@ spec = do
           recentIdx = T.breakOn (T.pack "Recent Accessions") rendered
           feedIdx   = T.breakOn (T.pack "Atom feed")         rendered
       T.length (fst recentIdx) < T.length (fst feedIdx) `shouldBe` True
+
+  describe "breadcrumb" $ do
+    it "omits a breadcrumb at the root (empty clsSourcePath)" $ do
+      let rendered = Gophermap.renderClassification defaultConfig
+                       (emptyClassification "library")
+      -- The breadcrumb line, when present, starts with two spaces and
+      -- contains " / " between segments. At the root there is none.
+      rendered `shouldSatisfy` (not . T.isInfixOf (T.pack " / "))
+
+    it "renders a breadcrumb line for a nested classification" $ do
+      let cls = (emptyClassification "2026") { clsSourcePath = "photos/2026" }
+          rendered = Gophermap.renderClassification defaultConfig cls
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "photos / 2026")
+
+    it "single-segment paths still render a breadcrumb" $ do
+      let cls = (emptyClassification "photos") { clsSourcePath = "photos" }
+          rendered = Gophermap.renderClassification defaultConfig cls
+      -- One segment, no " / " separator.
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "  photos")

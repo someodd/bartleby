@@ -45,10 +45,21 @@ renderHeader cls = T.concat
   , VM.info ("   " <> spacedTitle (clsTitle cls))
   , VM.info "  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
   , VM.info ""
+  , renderBreadcrumb cls
   , VM.info ("  " <> holdingsLine cls)
   , VM.info ""
   , renderDescriptionLines (clsDescription cls)
   ]
+
+-- | A single info line of slugs from 'clsSourcePath' so readers can
+-- see where they are in a deep tree. Empty at the root (no path to
+-- show) — same code path, no @if isRoot@.
+renderBreadcrumb :: Classification -> Text
+renderBreadcrumb cls = case clsSourcePath cls of
+  ""   -> ""
+  path ->
+    let segments = T.splitOn "/" (T.pack path)
+    in VM.info ("  " <> T.intercalate " / " segments) <> VM.info ""
 
 spacedTitle :: Text -> Text
 spacedTitle = T.intersperse ' '
