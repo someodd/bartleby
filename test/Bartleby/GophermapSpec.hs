@@ -189,3 +189,26 @@ spec = do
           rendered = Gophermap.renderClassification defaultConfig cls
       -- One segment, no " / " separator.
       rendered `shouldSatisfy` T.isInfixOf (T.pack "  photos")
+
+  describe "source-dir link" $ do
+    it "renders 'Browse source directory' on every classification" $ do
+      let renderedRoot = Gophermap.renderClassification defaultConfig
+                          (emptyClassification "library")
+      renderedRoot `shouldSatisfy` T.isInfixOf (T.pack "Browse source directory")
+
+    it "at root, selector is the library selector with a trailing slash" $ do
+      let renderedRoot = Gophermap.renderClassification defaultConfig
+                          (emptyClassification "library")
+      -- selector = "/library", and we want a tab-separated selector
+      -- of "/library/" (i.e. the raw library directory).
+      renderedRoot `shouldSatisfy` T.isInfixOf (T.pack "\t/library/\t")
+
+    it "at a nested classification, selector includes the clsSourcePath" $ do
+      let cls = (emptyClassification "2026") { clsSourcePath = "photos/2026" }
+          rendered = Gophermap.renderClassification defaultConfig cls
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "\t/library/photos/2026/\t")
+
+    it "is a directory link (item type 1)" $ do
+      let rendered = Gophermap.renderClassification defaultConfig
+                       (emptyClassification "library")
+      rendered `shouldSatisfy` T.isInfixOf (T.pack "1Browse source directory")

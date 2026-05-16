@@ -25,7 +25,8 @@ import qualified Venusia.MenuBuilder as VM
 --
 -- Section order follows library convention: browse-by-classification
 -- first, then the works shelved at this level, then @Recent
--- Accessions@ as a secondary view, then the atom feed link.
+-- Accessions@ as a secondary view, then the atom feed link, then an
+-- escape-hatch link to the raw source directory.
 renderClassification :: Config -> Classification -> Text
 renderClassification config cls = T.concat
   [ renderHeader cls
@@ -33,6 +34,7 @@ renderClassification config cls = T.concat
   , renderWorks config cls
   , renderRecentAccessions config cls
   , renderFeedLink config cls
+  , renderSourceDirLink config cls
   ]
 
 ------------------------------------------------------------------------
@@ -130,6 +132,18 @@ renderFeedLink config cls =
         ""   -> base <> "feed.xml"
         path -> base <> T.pack path <> "/feed.xml"
   in VM.text "Atom feed" sel (cfgHostname config) (cfgPort config)
+
+-- | Escape-hatch link to the raw directory the gopher daemon serves
+-- alongside @catalog/@. Lets readers step outside the curated view
+-- to see sidecar @.bcard@s, non-cataloged files, and the contents of
+-- work-directories.
+renderSourceDirLink :: Config -> Classification -> Text
+renderSourceDirLink config cls =
+  let sel = case clsSourcePath cls of
+        ""   -> unSelector (cfgSelector config) <> "/"
+        path -> unSelector (cfgSelector config) <> "/" <> T.pack path <> "/"
+  in VM.directory "Browse source directory" sel
+                  (cfgHostname config) (cfgPort config)
 
 ------------------------------------------------------------------------
 -- Entries
