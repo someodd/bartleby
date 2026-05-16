@@ -22,12 +22,16 @@ import Text.Printf (printf)
 import qualified Venusia.MenuBuilder as VM
 
 -- | Render the gophermap content for a classification.
+--
+-- Section order follows library convention: browse-by-classification
+-- first, then the works shelved at this level, then @Recent
+-- Accessions@ as a secondary view, then the atom feed link.
 renderClassification :: Config -> Classification -> Text
 renderClassification config cls = T.concat
   [ renderHeader cls
-  , renderRecentAccessions config cls
   , renderSubClassifications config cls
   , renderWorks config cls
+  , renderRecentAccessions config cls
   , renderFeedLink config cls
   ]
 

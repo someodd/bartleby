@@ -136,3 +136,37 @@ spec = do
       let cls = emptyClassification "x"  -- no works, no subs
           rendered = Gophermap.renderClassification defaultConfig cls
       rendered `shouldSatisfy` (not . T.isInfixOf (T.pack "Class-Here Works"))
+
+  describe "section ordering" $ do
+    -- A classification with both a sub-classification and enough works
+    -- to trigger Recent Accessions. The cfgRecentCount on
+    -- defaultConfig is 10, so we need clsTotalWorks > 10 for Recent
+    -- to show. Use a small recent_count to keep the fixture tiny.
+    let smallRecent = defaultConfig { cfgRecentCount = 1 }
+        manyWorks   = [ sampleWork { workTitle = T.pack ("Work " <> show i)
+                                   , workSourcePath = "w" <> show i <> ".jpg" }
+                      | i <- [1 .. 3 :: Int] ]
+        sub         = (emptyClassification "Sub") { clsSourcePath = "sub" }
+        cls         = (emptyClassification "Top")
+                        { clsSubs       = [sub]
+                        , clsWorks      = manyWorks
+                        , clsTotalWorks = length manyWorks
+                        }
+
+    it "renders Classifications before Class-Here Works" $ do
+      let rendered = Gophermap.renderClassification smallRecent cls
+          subIdx   = T.breakOn (T.pack "Classifications")   rendered
+          workIdx  = T.breakOn (T.pack "Class-Here Works")  rendered
+      T.length (fst subIdx) < T.length (fst workIdx) `shouldBe` True
+
+    it "renders Class-Here Works before Recent Accessions" $ do
+      let rendered = Gophermap.renderClassification smallRecent cls
+          workIdx   = T.breakOn (T.pack "Class-Here Works")  rendered
+          recentIdx = T.breakOn (T.pack "Recent Accessions") rendered
+      T.length (fst workIdx) < T.length (fst recentIdx) `shouldBe` True
+
+    it "renders Recent Accessions before the Atom feed link" $ do
+      let rendered = Gophermap.renderClassification smallRecent cls
+          recentIdx = T.breakOn (T.pack "Recent Accessions") rendered
+          feedIdx   = T.breakOn (T.pack "Atom feed")         rendered
+      T.length (fst recentIdx) < T.length (fst feedIdx) `shouldBe` True
