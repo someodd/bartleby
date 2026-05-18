@@ -1,12 +1,14 @@
 module Main (main) where
 
 import qualified Bartleby.Pipeline as Pipeline
+import Data.Version (showVersion)
+import qualified Paths_bartleby as P (version)
 import System.Environment (getArgs)
 import System.Exit (ExitCode (..), exitWith)
 import System.IO (hPutStr, hPutStrLn, stderr)
 
 versionString :: String
-versionString = "bartleby 0.1.0.0"
+versionString = "bartleby " ++ showVersion P.version
 
 usage :: String
 usage = unlines

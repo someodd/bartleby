@@ -1,5 +1,5 @@
 name:                bartleby
-version:             0.1.0.0
+version:             0.5.5
 synopsis:            A scrivener for gopherspace
 description:         See README.md and bartleby-plan.md.
 license:             GPL-3.0-or-later
